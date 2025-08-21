@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "371585698399",
+    "project_id": "taskgame-99e6b",
+    "storage_bucket": "taskgame-99e6b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:371585698399:android:ef9b74322bf0ef3f19a9ea",
+        "android_client_info": {
+          "package_name": "com.example.taskgame"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJq86ePVXGE_miji7tfamkobp1OR-IoKI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

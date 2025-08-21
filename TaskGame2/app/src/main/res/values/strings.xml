@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">TaskGame</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="navigation_drawer_open" translatable="false">Navigation Drawer Open</string>
+    <string name="navigation_drawer_close" translatable="false">Navigation Drawer Close</string>
+    <string name="username_hint" translatable="false">Username</string>
+    <string name="email_hint" translatable="false">Email</string>
+    <string name="password_hint" translatable="false">Password</string>
+    <string name="confirm_password_hint" translatable="false">Confirm password</string>
+    <string name="register_button" translatable="false">Register</string>
+
+</resources>
