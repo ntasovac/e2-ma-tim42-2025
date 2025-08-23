@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Category name">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pick a color"
+        android:layout_marginTop="12dp"/>
+
+    <RadioGroup
+        android:id="@+id/rgColors"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <!-- Each radio stores the ARGB int in its tag; we tint the circle bg -->
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbC1"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:button="@null"
+            android:tag="0xFFE57373"
+            android:background="@drawable/bg_color_swatch"
+            app:backgroundTint="#E57373"/>
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbC2"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:button="@null"
+            android:tag="0xFF64B5F6"
+            android:background="@drawable/bg_color_swatch"
+            app:backgroundTint="#64B5F6"
+            android:layout_marginStart="12dp"/>
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbC3"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:button="@null"
+            android:tag="0xFF81C784"
+            android:background="@drawable/bg_color_swatch"
+            app:backgroundTint="#81C784"
+            android:layout_marginStart="12dp"/>
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbC4"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:button="@null"
+            android:tag="0xFFFFD54F"
+            android:background="@drawable/bg_color_swatch"
+            app:backgroundTint="#FFD54F"
+            android:layout_marginStart="12dp"/>
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbC5"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:button="@null"
+            android:tag="0xFFBA68C8"
+            android:background="@drawable/bg_color_swatch"
+            app:backgroundTint="#BA68C8"
+            android:layout_marginStart="12dp"/>
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbC6"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:button="@null"
+            android:tag="0xFF4DB6AC"
+            android:background="@drawable/bg_color_swatch"
+            app:backgroundTint="#4DB6AC"
+            android:layout_marginStart="12dp"/>
+    </RadioGroup>
+</LinearLayout>

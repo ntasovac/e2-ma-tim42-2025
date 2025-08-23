@@ -11,4 +11,11 @@
         android:name="com.example.taskgame.view.fragments.FragmentHome"
         android:label="FragmentHome"
         tools:layout="@layout/fragment_home"/>
+
+    <fragment
+        android:id="@+id/fragmentCategory"
+        android:name="com.example.taskgame.view.fragments.CategoryFragment"
+        android:label="Categories"
+        tools:layout="@layout/fragment_category" />
+
 </navigation>

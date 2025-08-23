@@ -1,0 +1,33 @@
+R_DEF: Internal format may change without notice
+local
+color black
+color white
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+id addCategoryButton
+id backButton
+id categoryButton
+id categoryRecyclerView
+id editCategoryButton
+id firstNameInput
+id firstNameLayout
+id lastNameInput
+id lastNameLayout
+id loginButton
+id main
+id passwordInput
+id passwordLayout
+id registerButton
+id titleText
+id usernameInput
+id usernameLayout
+layout activity_category_management
+layout activity_main
+layout activity_register
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+style Base.Theme.Test2
+style Theme.Test2
+xml backup_rules
+xml data_extraction_rules
