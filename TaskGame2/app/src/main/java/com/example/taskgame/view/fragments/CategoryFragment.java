@@ -1,12 +1,13 @@
 package com.example.taskgame.view.fragments;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -16,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.taskgame.databinding.FragmentCategoryBinding;
+import com.example.taskgame.domain.models.Category;
 import com.example.taskgame.view.adapters.CategoryListAdapter;
 import com.example.taskgame.view.viewmodels.CategoryViewModel;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -25,6 +27,17 @@ public class CategoryFragment extends Fragment {
     private FragmentCategoryBinding binding;
     private CategoryViewModel vm;
     private CategoryListAdapter adapter;
+
+    // Shared color palette (names + ARGB ints)
+    private static final String[] COLOR_NAMES = {"Red", "Blue", "Green", "Yellow", "Purple", "Teal"};
+    private static final int[] COLORS = {
+            0xFFE57373, // red
+            0xFF64B5F6, // blue
+            0xFF81C784, // green
+            0xFFFFD54F, // yellow
+            0xFFBA68C8, // purple
+            0xFF4DB6AC  // teal
+    };
 
     public static CategoryFragment newInstance() { return new CategoryFragment(); }
 
@@ -40,66 +53,103 @@ public class CategoryFragment extends Fragment {
 
         vm = new ViewModelProvider(this).get(CategoryViewModel.class);
 
-        adapter = new CategoryListAdapter(category -> {
-            // TODO: open edit screen, or filter tasks by category
-        });
+        // Click on a row => edit dialog
+        adapter = new CategoryListAdapter(this::showEditDialog);
 
         binding.rvCategories.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.rvCategories.setAdapter(adapter);
 
         vm.getCategories().observe(getViewLifecycleOwner(), adapter::submitList);
 
-        // TEMP for testing: seed some data on first open (optional)
+        // Optional: mock data for testing only
         // vm.seedTestData();
 
-        // Show "Add" popup
+        // Add new category
         binding.fabAddCategory.setOnClickListener(v -> showAddDialog());
     }
 
+    /* ----------------------- ADD ----------------------- */
     private void showAddDialog() {
-        // --- preset color list (name + ARGB) ---
-        final String[] colorNames = {"Red", "Blue", "Green", "Yellow", "Purple", "Teal"};
-        final int[] colors = {
-                0xFFE57373, // red
-                0xFF64B5F6, // blue
-                0xFF81C784, // green
-                0xFFFFD54F, // yellow
-                0xFFBA68C8, // purple
-                0xFF4DB6AC  // teal
-        };
+        final int[] selectedIndex = {0};
 
-        // Simple vertical container with an EditText
-        LinearLayout container = new LinearLayout(requireContext());
-        container.setOrientation(LinearLayout.VERTICAL);
-        int pad = (int) (16 * getResources().getDisplayMetrics().density);
-        container.setPadding(pad, pad, pad, 0);
-
-        final EditText etName = new EditText(requireContext());
-        etName.setHint("Category name");
+        LinearLayout container = makeDialogContainer();
+        EditText etName = makeNameField("Category name");
         container.addView(etName);
-
-        final int[] selectedIndex = {0}; // default selected color
 
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Add category")
                 .setView(container)
-                .setSingleChoiceItems(colorNames, 0, (d, which) -> selectedIndex[0] = which)
+                .setSingleChoiceItems(COLOR_NAMES, 0, (d, which) -> selectedIndex[0] = which)
                 .setPositiveButton("Create", (d, w) -> {
-                    String name = etName.getText() == null ? "" : etName.getText().toString().trim();
+                    String name = safeText(etName);
                     if (name.isEmpty()) {
-                        Toast.makeText(requireContext(), "Name is required", Toast.LENGTH_SHORT).show();
+                        toast("Name is required");
                         return;
                     }
-                    int color = colors[selectedIndex[0]];
-
-                    // ViewModel should return false if that color is already taken
-                    boolean ok = vm.addCategory(name, color);
-                    if (!ok) {
-                        Toast.makeText(requireContext(), "That color is already taken", Toast.LENGTH_SHORT).show();
-                    }
+                    int color = COLORS[selectedIndex[0]];
+                    boolean ok = vm.addCategory(name, color); // false if color already taken
+                    if (!ok) toast("That color is already taken");
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    /* ----------------------- EDIT ----------------------- */
+    private void showEditDialog(Category cat) {
+        // Preselect index matching current color
+        int preselect = 0;
+        for (int i = 0; i < COLORS.length; i++) {
+            if (COLORS[i] == cat.getColor()) {
+                preselect = i;
+                break;
+            }
+        }
+        final int[] selectedIndex = {preselect};
+
+        LinearLayout container = makeDialogContainer();
+        EditText etName = makeNameField("Category name");
+        etName.setText(cat.getName());
+        container.addView(etName);
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Edit category")
+                .setView(container)
+                .setSingleChoiceItems(COLOR_NAMES, preselect, (d, which) -> selectedIndex[0] = which)
+                .setPositiveButton("Save", (d, w) -> {
+                    String name = safeText(etName);
+                    if (name.isEmpty()) {
+                        toast("Name is required");
+                        return;
+                    }
+                    int newColor = COLORS[selectedIndex[0]];
+                    boolean ok = vm.updateCategory(cat.getId(), name, newColor); // false if color taken
+                    if (!ok) toast("That color is already taken");
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /* -------------------- Helpers ---------------------- */
+    private LinearLayout makeDialogContainer() {
+        LinearLayout container = new LinearLayout(requireContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        container.setPadding(pad, pad, pad, 0);
+        return container;
+    }
+
+    private EditText makeNameField(String hint) {
+        EditText et = new EditText(requireContext());
+        et.setHint(hint);
+        return et;
+    }
+
+    private String safeText(EditText et) {
+        return et.getText() == null ? "" : et.getText().toString().trim();
+    }
+
+    private void toast(String msg) {
+        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
     }
 
     @Override

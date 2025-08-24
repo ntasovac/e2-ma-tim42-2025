@@ -41,6 +41,28 @@ public class CategoryViewModel extends ViewModel {
         return true;
     }
 
+    public boolean updateCategory(long id, String newName, int newColor) {
+        List<Category> list = categories.getValue();
+        if (list == null) return false;
+
+        // unique color among other categories
+        for (Category c : list) {
+            if (c.getId() != id && c.getColor() == newColor) return false;
+        }
+
+        List<Category> updated = new ArrayList<>(list.size());
+        for (Category c : list) {
+            if (c.getId() == id) {
+                updated.add(new Category(id, newName, newColor));
+            } else {
+                updated.add(c);
+            }
+        }
+        categories.setValue(updated);
+        return true;
+    }
+
+
     public void startObserving() {
         if (reg != null) return;
         reg = repo.observeCategories(new CategoryRepository.StreamCallback() {
