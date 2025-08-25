@@ -54,7 +54,7 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(new Intent(LoginActivity.this, RegistrationActivity.class));
         });
         viewModel.getUserLiveData().observe(this, firebaseUser -> {
-            if (firebaseUser != null) {
+            if (firebaseUser != null && firebaseUser.isEmailVerified()) {
                 Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(LoginActivity.this, HomeActivity.class));
                 finish();
@@ -63,7 +63,7 @@ public class LoginActivity extends AppCompatActivity {
 
         viewModel.getErrorLiveData().observe(this, error -> {
             if (error != null) {
-                Toast.makeText(this, "Error: " + error, Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Error: Wrong email or password!", Toast.LENGTH_LONG).show();
             }
         });
     }
