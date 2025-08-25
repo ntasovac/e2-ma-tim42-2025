@@ -10,9 +10,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.taskgame.R;
-
-import java.util.Timer;
-import java.util.TimerTask;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class SplashScreenActivity extends AppCompatActivity {
 
@@ -26,14 +25,20 @@ public class SplashScreenActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        Intent intent;
+
+        if (user != null && user.isEmailVerified()) {
+            intent = new Intent(SplashScreenActivity.this, HomeActivity.class);
+        } else {
+            intent = new Intent(SplashScreenActivity.this, LoginActivity.class);
+        }
+
         int SPLASH_TIME_OUT = 1000;
-        new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                Intent intent = new Intent(SplashScreenActivity.this, RegistrationActivity.class);
-                startActivity(intent);
-                finish();
-            }
+        findViewById(R.id.main).postDelayed(() -> {
+            startActivity(intent);
+            finish();
         }, SPLASH_TIME_OUT);
     }
 }

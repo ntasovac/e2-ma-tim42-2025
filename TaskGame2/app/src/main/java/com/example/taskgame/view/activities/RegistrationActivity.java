@@ -83,7 +83,7 @@ public class RegistrationActivity extends AppCompatActivity {
 
         viewModel.getRegistrationSuccess().observe(this, success -> {
             if(success != null && success) {
-                Intent intent = new Intent(RegistrationActivity.this, HomeActivity.class);
+                Intent intent = new Intent(RegistrationActivity.this, LoginActivity.class);
                 startActivity(intent);
                 finish();
             }
