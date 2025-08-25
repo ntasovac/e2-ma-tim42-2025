@@ -10,7 +10,10 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.taskgame.R;
@@ -29,7 +32,7 @@ public class RegistrationActivity extends AppCompatActivity {
         binding = ActivityRegistrationBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         EdgeToEdge.enable(this);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.registration), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
@@ -37,18 +40,52 @@ public class RegistrationActivity extends AppCompatActivity {
 
         viewModel = new ViewModelProvider(this).get(RegistrationViewModel.class);
 
-        // Spinner setup (avatars 1-5)
-        Integer[] avatars = {1,2,3,4,5};
-        ArrayAdapter<Integer> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, avatars);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        binding.avatarSpinner.setAdapter(adapter);
+        ImageView gojo = findViewById(R.id.gojo);
+        ImageView eren = findViewById(R.id.eren);
+        ImageView mikasa = findViewById(R.id.mikasa);
+        ImageView kaneki = findViewById(R.id.kaneki);
+        ImageView hinata = findViewById(R.id.hinata);
+        final int[] selectedAvatar = {R.drawable.gojo};
+
+        View.OnClickListener avatarClickListener = v -> {
+
+            eren.setSelected(false);
+            gojo.setSelected(false);
+            mikasa.setSelected(false);
+            kaneki.setSelected(false);
+            hinata.setSelected(false);
+
+            v.setSelected(true);
+
+            int selectedResId;
+            if (v.getId() == R.id.gojo) {
+                selectedResId = R.drawable.gojo;
+            } else if(v.getId()== R.id.eren){
+                selectedResId = R.drawable.eren;
+            } else if (v.getId() == R.id.mikasa) {
+                selectedResId = R.drawable.mikasa;
+            } else if (v.getId() == R.id.kaneki) {
+                selectedResId = R.drawable.kaneki;
+            } else if (v.getId() == R.id.hinata) {
+                selectedResId = R.drawable.hinata;
+            } else {
+                selectedResId = R.drawable.gojo;
+            }
+
+            viewModel.setSelectedAvatar(selectedResId);
+        };
+
+        gojo.setOnClickListener(avatarClickListener);
+        eren.setOnClickListener(avatarClickListener);
+        mikasa.setOnClickListener(avatarClickListener);
+        kaneki.setOnClickListener(avatarClickListener);
+        hinata.setOnClickListener(avatarClickListener);
 
         viewModel.getRegistrationSuccess().observe(this, success -> {
             if(success != null && success) {
-                // Navigacija na HomeActivity
-                Intent intent = new Intent(RegistrationActivity.this, HomeActivity.class);
+                Intent intent = new Intent(RegistrationActivity.this, LoginActivity.class);
                 startActivity(intent);
-                finish(); // da se ne vrati na registraciju
+                finish();
             }
         });
 
@@ -57,7 +94,6 @@ public class RegistrationActivity extends AppCompatActivity {
             viewModel.setEmail(binding.emailInput.getText().toString().trim());
             viewModel.setPassword(binding.passwordInput.getText().toString());
             viewModel.setConfirmPassword(binding.confirmPasswordInput.getText().toString());
-            viewModel.setSelectedAvatar((Integer) binding.avatarSpinner.getSelectedItem());
 
             viewModel.register();
         });

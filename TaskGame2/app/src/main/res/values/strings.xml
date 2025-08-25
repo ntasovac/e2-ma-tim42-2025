@@ -9,5 +9,9 @@
     <string name="password_hint" translatable="false">Password</string>
     <string name="confirm_password_hint" translatable="false">Confirm password</string>
     <string name="register_button" translatable="false">Register</string>
+    <string name="login" translatable="false">Login</string>
+    <string name="create_account" translatable="false">Don\'t have an account? Register</string>
+    <string name="category_name" translatable="false">Category name</string>
+    <string name="logout" translatable="false">Logout</string>
 
 </resources>

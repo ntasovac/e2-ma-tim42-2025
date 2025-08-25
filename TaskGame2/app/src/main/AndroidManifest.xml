@@ -15,6 +15,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TaskGame">
         <activity
+            android:name=".view.activities.LoginActivity"
+            android:exported="false" />
+        <activity
             android:name=".view.activities.RegistrationActivity"
             android:exported="false" />
         <activity
