@@ -65,6 +65,7 @@ public class User implements Parcelable {
     public void setAvatar(int avatar) {
         Avatar = avatar;
     }
+
     @Override
     public String toString(){
         return "User{" +

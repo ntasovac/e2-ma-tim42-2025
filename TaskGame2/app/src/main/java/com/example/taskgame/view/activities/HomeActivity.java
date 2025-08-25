@@ -82,7 +82,7 @@ public class HomeActivity extends AppCompatActivity {
             boolean isTopLevelDestination = topLevelDestinations.contains(id);
             if (!isTopLevelDestination) {
                 if (id == R.id.fragmentHome) {
-                    Toast.makeText(HomeActivity.this, "Products", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(HomeActivity.this, "Home", Toast.LENGTH_SHORT).show();
                 }
                 drawer.closeDrawers();
             }

@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
+
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
@@ -14,6 +15,8 @@
             android:id="@+id/username_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:padding="12dp"
             android:hint="@string/username_hint"
             android:inputType="textPersonName"
             android:layout_marginBottom="12dp"/>
@@ -22,6 +25,8 @@
             android:id="@+id/email_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:padding="12dp"
             android:hint="@string/email_hint"
             android:inputType="textEmailAddress"
             android:layout_marginBottom="12dp"/>
@@ -30,6 +35,8 @@
             android:id="@+id/password_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:padding="12dp"
             android:hint="@string/password_hint"
             android:inputType="textPassword"
             android:layout_marginBottom="12dp"/>
@@ -38,20 +45,76 @@
             android:id="@+id/confirm_password_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:padding="12dp"
             android:hint="@string/confirm_password_hint"
             android:inputType="textPassword"
             android:layout_marginBottom="12dp"/>
 
-        <Spinner
-            android:id="@+id/avatar_spinner"
+        <GridLayout
+            android:id="@+id/avatarGrid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"/>
+            android:columnCount="3"
+            android:rowCount="2"
+            android:padding="16dp"
+            android:alignmentMode="alignMargins"
+            android:columnOrderPreserved="false">
+
+            <ImageView
+                android:id="@+id/eren"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/eren"
+                android:scaleType="centerCrop"
+                android:background="@drawable/avatar_border_selector"
+                android:padding="4dp"/>
+
+            <ImageView
+                android:id="@+id/gojo"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/gojo"
+                android:scaleType="centerCrop"
+                android:background="@drawable/avatar_border_selector"
+                android:padding="4dp"/>
+
+            <ImageView
+                android:id="@+id/mikasa"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/mikasa"
+                android:scaleType="centerCrop"
+                android:background="@drawable/avatar_border_selector"
+                android:padding="4dp"/>
+
+            <ImageView
+                android:id="@+id/kaneki"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/kaneki"
+                android:scaleType="centerCrop"
+                android:background="@drawable/avatar_border_selector"
+                android:padding="4dp"/>
+
+            <ImageView
+                android:id="@+id/hinata"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/hinata"
+                android:scaleType="centerCrop"
+                android:background="@drawable/avatar_border_selector"
+                android:padding="4dp"/>
+
+        </GridLayout>
 
         <Button
             android:id="@+id/register_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:minWidth="120dp"
+            android:layout_marginTop="16dp"
             android:text="@string/register_button"/>
     </LinearLayout>
 </ScrollView>

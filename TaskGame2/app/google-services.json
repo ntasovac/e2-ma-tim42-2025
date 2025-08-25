@@ -12,7 +12,20 @@
           "package_name": "com.example.taskgame"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "371585698399-p9jhp18ilvbtp86fupgrtiu7l0gro72v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.taskgame",
+            "certificate_hash": "0f1e8ba52cce014cff874fc46752cc44ff11f90e"
+          }
+        },
+        {
+          "client_id": "371585698399-7lnc8j8783bi8i0hnhvhd3m98aonotlk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCJq86ePVXGE_miji7tfamkobp1OR-IoKI"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "371585698399-7lnc8j8783bi8i0hnhvhd3m98aonotlk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
