@@ -53,7 +53,7 @@ public class RegistrationViewModel extends ViewModel {
             return;
         }
 
-        User newUser = new User(username, email, password, avatar);
+        User newUser = new User(username, email, avatar);
 
         userRepository.registerUser(email, password, newUser, new UserRepository.RegisterCallback() {
             @Override

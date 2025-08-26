@@ -12,7 +12,6 @@ import java.util.List;
 public class User implements Parcelable {
     private String Username;
     private String Email;
-    private String Password;
     private int Avatar;
     private Title Title;
     private int Level;
@@ -22,10 +21,9 @@ public class User implements Parcelable {
     private List<Integer> Badges;
     private List<Equipment> Equipment;
     public User(){}
-    public User(String username, String email, String password, int avatar){
+    public User(String username, String email, int avatar){
         this.Username = username;
         this.Email = email;
-        this.Password = password;
         this.Avatar = avatar;
         this.Title = Title.ROOKIE;
         this.Level = 0;
@@ -38,7 +36,6 @@ public class User implements Parcelable {
     protected User(Parcel in){
         Username = in.readString();
         Email = in.readString();
-        Password = in.readString();
         Avatar = in.readInt();
     }
 
@@ -56,14 +53,6 @@ public class User implements Parcelable {
 
     public void setEmail(String email) {
         Email = email;
-    }
-
-    public String getPassword() {
-        return Password;
-    }
-
-    public void setPassword(String password) {
-        Password = password;
     }
 
     public int getAvatar() {
@@ -135,7 +124,6 @@ public class User implements Parcelable {
         return "User{" +
                 "Username='" + Username + '\'' +
                 ", Email='" + Email + '\'' +
-                ", Password='" + Password + '\'' +
                 ", Avatar=" + Avatar +
                 ", Title=" + Title +
                 ", Level=" + Level +
@@ -154,7 +142,6 @@ public class User implements Parcelable {
     public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeString(Username);
         dest.writeString(Email);
-        dest.writeString(Password);
         dest.writeInt(Avatar);
         dest.writeString(Title != null ? Title.name() : null); // enum kao string
         dest.writeInt(Level);
