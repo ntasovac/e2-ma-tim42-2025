@@ -51,10 +51,10 @@ public class HomeActivity extends AppCompatActivity {
 
         appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.fragmentHome,
-                R.id.fragmentCategory
+                R.id.fragmentCategory,
+                R.id.fragmentProfile
         ).setOpenableLayout(drawer).build();
 
-        // Wire toolbar + drawer + menu to Navigation
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
         navView.setNavigationItemSelectedListener(item -> {

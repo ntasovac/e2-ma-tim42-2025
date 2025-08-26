@@ -45,7 +45,14 @@ public class RegistrationActivity extends AppCompatActivity {
         ImageView mikasa = findViewById(R.id.mikasa);
         ImageView kaneki = findViewById(R.id.kaneki);
         ImageView hinata = findViewById(R.id.hinata);
-        final int[] selectedAvatar = {R.drawable.gojo};
+
+        gojo.setTag(1);
+        eren.setTag(2);
+        mikasa.setTag(3);
+        kaneki.setTag(4);
+        hinata.setTag(5);
+
+        final int[] selectedAvatar = {1};
 
         View.OnClickListener avatarClickListener = v -> {
 
@@ -57,22 +64,10 @@ public class RegistrationActivity extends AppCompatActivity {
 
             v.setSelected(true);
 
-            int selectedResId;
-            if (v.getId() == R.id.gojo) {
-                selectedResId = R.drawable.gojo;
-            } else if(v.getId()== R.id.eren){
-                selectedResId = R.drawable.eren;
-            } else if (v.getId() == R.id.mikasa) {
-                selectedResId = R.drawable.mikasa;
-            } else if (v.getId() == R.id.kaneki) {
-                selectedResId = R.drawable.kaneki;
-            } else if (v.getId() == R.id.hinata) {
-                selectedResId = R.drawable.hinata;
-            } else {
-                selectedResId = R.drawable.gojo;
-            }
+            int selectedValue = (int) v.getTag();
+            selectedAvatar[0] = selectedValue;
 
-            viewModel.setSelectedAvatar(selectedResId);
+            viewModel.setSelectedAvatar(selectedValue);
         };
 
         gojo.setOnClickListener(avatarClickListener);

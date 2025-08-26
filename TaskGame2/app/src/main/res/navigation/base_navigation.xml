@@ -18,4 +18,10 @@
         android:label="Categories"
         tools:layout="@layout/fragment_category" />
 
+    <fragment
+        android:id="@+id/fragmentProfile"
+        android:name="com.example.taskgame.view.fragments.ProfileFragment"
+        android:label="@string/profile"
+        tools:layout="@layout/fragment_profile" />
+
 </navigation>

@@ -13,5 +13,15 @@
     <string name="create_account" translatable="false">Don\'t have an account? Register</string>
     <string name="category_name" translatable="false">Category name</string>
     <string name="logout" translatable="false">Logout</string>
+    <string name="email_example" translatable="false">email@example.com</string>
+    <string name="profile" translatable="false">Profile</string>
+    <string name="level">Level: %1$d</string>
+    <string name="title">Title: %1$s</string>
+    <string name="power_points">Power Points (PP): %1$d</string>
+    <string name="experience_points">Experience Points (XP): %1$d</string>
+    <string name="coins">Coins: %1$d</string>
+    <string name="change_password">Change password</string>
+    <string name="current_password_hint">Current password</string>
+    <string name="new_password_hint">New password</string>
 
 </resources>
