@@ -62,19 +62,19 @@
             android:columnOrderPreserved="false">
 
             <ImageView
-                android:id="@+id/eren"
+                android:id="@+id/gojo"
                 android:layout_width="100dp"
                 android:layout_height="100dp"
-                android:src="@drawable/eren"
+                android:src="@drawable/gojo"
                 android:scaleType="centerCrop"
                 android:background="@drawable/avatar_border_selector"
                 android:padding="4dp"/>
 
             <ImageView
-                android:id="@+id/gojo"
+                android:id="@+id/eren"
                 android:layout_width="100dp"
                 android:layout_height="100dp"
-                android:src="@drawable/gojo"
+                android:src="@drawable/eren"
                 android:scaleType="centerCrop"
                 android:background="@drawable/avatar_border_selector"
                 android:padding="4dp"/>
