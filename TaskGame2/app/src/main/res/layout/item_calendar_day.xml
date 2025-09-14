@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="0dp"
+    android:layout_height="100dp"
+    android:layout_weight="1"
+    android:background="@drawable/bg_calendar_day"
+    android:padding="4dp">
+
+    <!-- Date number (e.g., 14) -->
+    <TextView
+        android:id="@+id/tvDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="14"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="@android:color/black"/>
+
+    <!-- Task container -->
+    <LinearLayout
+        android:id="@+id/taskContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"/>
+</LinearLayout>

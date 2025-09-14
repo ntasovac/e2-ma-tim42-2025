@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/chips"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:singleSelection="true">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chAll"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:checked="true"
+            android:text="Svi"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chOneTime"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:text="Jednokratni"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chRepeating"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:text="Ponavljajući"/>
+    </com.google.android.material.chip.ChipGroup>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="8dp"/>
+</LinearLayout>

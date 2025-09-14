@@ -9,4 +9,10 @@
         android:id="@+id/fragmentCategory"
         android:title="Categories" />
 
+    <item
+        android:id="@+id/fragmentTask"
+        android:title="Create Task"/>
+
+    <item android:id="@+id/fragmentTasksOverview" android:title="Prikaz zadataka"/>
+
 </menu>

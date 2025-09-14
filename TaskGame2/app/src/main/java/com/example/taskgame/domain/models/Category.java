@@ -1,11 +1,16 @@
+// com.example.taskgame.domain.models.Category
 package com.example.taskgame.domain.models;
 
-import java.util.Objects;
+import com.google.firebase.firestore.IgnoreExtraProperties;
 
+@IgnoreExtraProperties
 public class Category {
     private long id;
     private String name;
-    private int color; // ARGB int (npr. Color.RED)
+    private int color;
+
+    // REQUIRED by Firestore
+    public Category() {}
 
     public Category(long id, String name, int color) {
         this.id = id;
@@ -14,18 +19,11 @@ public class Category {
     }
 
     public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
+
     public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
     public int getColor() { return color; }
     public void setColor(int color) { this.color = color; }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Category)) return false;
-        Category c = (Category) o;
-        return id == c.id && Objects.equals(name, c.name);
-    }
-
-    @Override
-    public int hashCode() { return Objects.hash(id, name); }
 }

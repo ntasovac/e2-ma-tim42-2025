@@ -6,13 +6,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
@@ -53,30 +52,27 @@ public class CategoryFragment extends Fragment {
 
         vm = new ViewModelProvider(this).get(CategoryViewModel.class);
 
-        // Click on a row => edit dialog
         adapter = new CategoryListAdapter(this::showEditDialog);
-
         binding.rvCategories.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.rvCategories.setAdapter(adapter);
 
         vm.getCategories().observe(getViewLifecycleOwner(), adapter::submitList);
+        vm.startObserving(); // Firestore realtime
 
-        // Optional: mock data for testing only
-        // vm.seedTestData();
-
-        // Add new category
         binding.fabAddCategory.setOnClickListener(v -> showAddDialog());
     }
 
     /* ----------------------- ADD ----------------------- */
     private void showAddDialog() {
+        if (!canShowDialog()) return;
+
         final int[] selectedIndex = {0};
 
         LinearLayout container = makeDialogContainer();
         EditText etName = makeNameField("Category name");
         container.addView(etName);
 
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireActivity())
                 .setTitle("Add category")
                 .setView(container)
                 .setSingleChoiceItems(COLOR_NAMES, 0, (d, which) -> selectedIndex[0] = which)
@@ -87,8 +83,17 @@ public class CategoryFragment extends Fragment {
                         return;
                     }
                     int color = COLORS[selectedIndex[0]];
-                    boolean ok = vm.addCategory(name, color); // false if color already taken
-                    if (!ok) toast("That color is already taken");
+
+                    vm.addCategory(name, color, new CategoryViewModel.Result() {
+                        @Override public void ok() { toast("Created"); }
+                        @Override public void error(Exception e) {
+                            toast(messageOrDefault(e, "Create failed"));
+                        }
+                    });
+
+                    // If you’re still on the in-memory VM version:
+                    // boolean ok = vm.addCategory(name, color);
+                    // if (!ok) toast("That color is already taken");
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -96,25 +101,20 @@ public class CategoryFragment extends Fragment {
 
     /* ----------------------- EDIT ----------------------- */
     private void showEditDialog(Category cat) {
-        // Preselect index matching current color
-        int preselect = 0;
-        for (int i = 0; i < COLORS.length; i++) {
-            if (COLORS[i] == cat.getColor()) {
-                preselect = i;
-                break;
-            }
-        }
-        final int[] selectedIndex = {preselect};
+        if (!canShowDialog()) return;
+
+        int preselect = indexOfColor(cat.getColor());
+        final int[] selectedIndex = {preselect < 0 ? 0 : preselect};
 
         LinearLayout container = makeDialogContainer();
         EditText etName = makeNameField("Category name");
         etName.setText(cat.getName());
         container.addView(etName);
 
-        new MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireActivity())
                 .setTitle("Edit category")
                 .setView(container)
-                .setSingleChoiceItems(COLOR_NAMES, preselect, (d, which) -> selectedIndex[0] = which)
+                .setSingleChoiceItems(COLOR_NAMES, selectedIndex[0], (d, which) -> selectedIndex[0] = which)
                 .setPositiveButton("Save", (d, w) -> {
                     String name = safeText(etName);
                     if (name.isEmpty()) {
@@ -122,14 +122,34 @@ public class CategoryFragment extends Fragment {
                         return;
                     }
                     int newColor = COLORS[selectedIndex[0]];
-                    boolean ok = vm.updateCategory(cat.getId(), name, newColor); // false if color taken
-                    if (!ok) toast("That color is already taken");
+
+                    vm.updateCategory(cat.getId(), name, newColor, new CategoryViewModel.Result() {
+                        @Override public void ok() { toast("Saved"); }
+                        @Override public void error(Exception e) {
+                            toast(messageOrDefault(e, "Save failed"));
+                        }
+                    });
+
+                    // In-memory fallback:
+                    // boolean ok = vm.updateCategory(cat.getId(), name, newColor);
+                    // if (!ok) toast("That color is already taken");
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
     /* -------------------- Helpers ---------------------- */
+    private boolean canShowDialog() {
+        return isAdded()
+                && getActivity() != null
+                && getViewLifecycleOwner().getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED);
+    }
+
+    private int indexOfColor(int color) {
+        for (int i = 0; i < COLORS.length; i++) if (COLORS[i] == color) return i;
+        return -1;
+    }
+
     private LinearLayout makeDialogContainer() {
         LinearLayout container = new LinearLayout(requireContext());
         container.setOrientation(LinearLayout.VERTICAL);
@@ -146,6 +166,10 @@ public class CategoryFragment extends Fragment {
 
     private String safeText(EditText et) {
         return et.getText() == null ? "" : et.getText().toString().trim();
+    }
+
+    private String messageOrDefault(Exception e, String fallback) {
+        return (e != null && e.getMessage() != null && !e.getMessage().isEmpty()) ? e.getMessage() : fallback;
     }
 
     private void toast(String msg) {
