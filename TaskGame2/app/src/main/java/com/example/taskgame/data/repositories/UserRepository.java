@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.taskgame.domain.models.Equipment;
 import com.example.taskgame.domain.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -13,7 +14,15 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class UserRepository {
     private final FirebaseAuth auth;
@@ -73,7 +82,7 @@ public class UserRepository {
                 });
     }
 
-    public LiveData<User> getCurrentUser() {
+    public MutableLiveData<User> getCurrentUser() {
         MutableLiveData<User> liveData = new MutableLiveData<>();
 
         if (auth.getCurrentUser() != null) {
@@ -118,6 +127,55 @@ public class UserRepository {
                 callback.onFailure(new Exception("Current password is incorrect"));
             }
         });
+    }
+    public void buyEquipment(Equipment equipment, OnCompleteListener<Object> listener) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        DocumentReference userRef = db.collection("users").document(user.getUid());
+
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(userRef);
+            if (!snapshot.exists()) {
+                Log.e("buyEquipment", "User document does not exist!");
+                throw new FirebaseFirestoreException(
+                        "User not found",
+                        FirebaseFirestoreException.Code.ABORTED
+                );
+            }
+
+            long coins = snapshot.getLong("coins");
+
+            List<Map<String, Object>> equipmentList =
+                    (List<Map<String, Object>>) snapshot.get("equipment");
+
+            if (coins < equipment.getPrice()) {
+                throw new FirebaseFirestoreException(
+                        "Not enough coins",
+                        FirebaseFirestoreException.Code.ABORTED
+                );
+            }
+
+            transaction.update(userRef, "coins", coins - equipment.getPrice());
+
+            Map<String, Object> newEquipment = new HashMap<>();
+            newEquipment.put("name", equipment.getName());
+            newEquipment.put("type", equipment.getType().toString());
+            newEquipment.put("price", equipment.getPrice());
+            newEquipment.put("description", equipment.getDescription());
+            newEquipment.put("image", equipment.getImage());
+            newEquipment.put("effect amount", equipment.getEffectAmount());
+            newEquipment.put("usage count", equipment.getUsageCount());
+            newEquipment.put("is activated", equipment.isActivated());
+            newEquipment.put("is effect permanent", equipment.isEffectPermanent());
+
+            if (equipmentList == null) {
+                equipmentList = new ArrayList<>();
+            }
+            equipmentList.add(newEquipment);
+
+            transaction.update(userRef, "equipment", equipmentList);
+
+            return null;
+        }).addOnCompleteListener(listener);
     }
     public LiveData<FirebaseUser> getUserLiveData() {
         return userLiveData;
