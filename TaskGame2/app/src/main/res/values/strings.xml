@@ -23,5 +23,13 @@
     <string name="change_password">Change password</string>
     <string name="current_password_hint">Current password</string>
     <string name="new_password_hint">New password</string>
+    <string name="equipment_name">Equipment name</string>
+    <string name="equpiment_description">Description for equipment</string>
+    <string name="equipment_price">0</string>
+    <string name="equipment_type">Equipment type\n</string>
+    <string name="buy_button">Buy</string>
+    <string name="filters">FILTER</string>
+    <string name="shop">Shop</string>
+    <string name="activate_button">Activate</string>
 
 </resources>

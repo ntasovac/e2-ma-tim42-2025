@@ -2,6 +2,7 @@ package com.example.taskgame.view.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -12,6 +13,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -19,14 +21,20 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.taskgame.R;
 import com.example.taskgame.databinding.ActivityHomeBinding;
+import com.example.taskgame.domain.models.Equipment;
+import com.example.taskgame.view.viewmodels.HomeViewModel;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class HomeActivity extends AppCompatActivity {
 
     private ActivityHomeBinding binding;
     private AppBarConfiguration appBarConfiguration;
     private NavController navController;
+    private HomeViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,13 +60,18 @@ public class HomeActivity extends AppCompatActivity {
         appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.fragmentHome,
                 R.id.fragmentCategory,
-                R.id.fragmentProfile
+                R.id.fragmentProfile,
+                R.id.fragmentEquipmentShop
         ).setOpenableLayout(drawer).build();
 
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
+
+        viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+
         navView.setNavigationItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.nav_logout) {
+            int id = item.getItemId();
+            if (id == R.id.nav_logout) {
                 FirebaseAuth.getInstance().signOut();
 
                 Intent intent = new Intent(this, LoginActivity.class);
@@ -67,6 +80,17 @@ public class HomeActivity extends AppCompatActivity {
                 finish();
                 Toast.makeText(this, "You have been logged out", Toast.LENGTH_SHORT).show();
                 return true;
+            }else if(id == R.id.fragmentEquipmentShop) {
+                int currentLevel = viewModel.getCurrentLevel();
+                if (currentLevel == 0) {
+                    Toast.makeText(this, "Level up required", Toast.LENGTH_SHORT).show();
+                    return true;
+                } else {
+                    Bundle bundle = new Bundle();
+                    bundle.putInt("userLevel", currentLevel);
+                    navController.navigate(R.id.fragmentEquipmentShop, bundle);
+                    return true;
+                }
             } else {
                 return NavigationUI.onNavDestinationSelected(item, navController);
             }

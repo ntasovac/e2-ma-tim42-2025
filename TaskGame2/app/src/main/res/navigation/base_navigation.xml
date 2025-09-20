@@ -10,7 +10,8 @@
         android:id="@+id/fragmentHome"
         android:name="com.example.taskgame.view.fragments.FragmentHome"
         android:label="FragmentHome"
-        tools:layout="@layout/fragment_home"/>
+        tools:layout="@layout/fragment_home">
+    </fragment>
 
     <fragment
         android:id="@+id/fragmentCategory"
@@ -23,5 +24,11 @@
         android:name="com.example.taskgame.view.fragments.ProfileFragment"
         android:label="@string/profile"
         tools:layout="@layout/fragment_profile" />
+    <fragment
+        android:id="@+id/fragmentEquipmentShop"
+        android:name="com.example.taskgame.view.fragments.EquipmentShopFragment"
+        android:label="@string/shop"
+        tools:layout="@layout/fragment_equipment_shop">
+    </fragment>
 
 </navigation>
