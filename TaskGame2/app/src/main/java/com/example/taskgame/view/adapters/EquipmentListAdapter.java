@@ -1,6 +1,7 @@
 package com.example.taskgame.view.adapters;
 
 import android.content.Context;
+import android.content.MutableContextWrapper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,8 +15,11 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.MutableLiveData;
 
 import com.example.taskgame.R;
+import com.example.taskgame.data.repositories.UserRepository;
+import com.example.taskgame.domain.enums.EquipmentType;
 import com.example.taskgame.domain.models.Equipment;
 
 import java.util.ArrayList;
@@ -23,6 +27,7 @@ import java.util.List;
 
 public class EquipmentListAdapter extends ArrayAdapter<Equipment> {
     private ArrayList<Equipment> aEquipment;
+    private UserRepository userRepository;
 
     public interface OnBuyClickListener {
         void onBuyClicked(Equipment equipment);
@@ -31,7 +36,7 @@ public class EquipmentListAdapter extends ArrayAdapter<Equipment> {
     public EquipmentListAdapter(Context context, ArrayList<Equipment> equipment){
         super(context, R.layout.equipment_card, equipment);
         aEquipment = equipment;
-
+        userRepository = new UserRepository();
     }
 
     public void setOnBuyClickListener(OnBuyClickListener listener) {
@@ -77,10 +82,30 @@ public class EquipmentListAdapter extends ArrayAdapter<Equipment> {
             });
         }
 
+        buyButton.setEnabled(true);
+        buyButton.setText("Buy");
+
+        userRepository.getCurrentUser().observeForever(user -> {
+            if (user == null || user.getEquipment() == null) return;
+
+            for (Equipment eq : user.getEquipment()) {
+                if (equipment.getType() == EquipmentType.CLOTHING
+                        && equipment.getName().equals(eq.getName())) {
+                    buyButton.setEnabled(false);
+                    buyButton.setText("OWNED");
+                    break;
+                }
+            }
+        });
+
         buyButton.setOnClickListener(v -> {
             Log.d("EquipmentAdapter", "Buy button clicked for: " + equipment.getName());
             if (buyListener != null) {
                 buyListener.onBuyClicked(equipment);
+                if(equipment.getType() == EquipmentType.CLOTHING){
+                    buyButton.setEnabled(false);
+                    buyButton.setText("OWNED");
+                }
             } else {
                 Log.e("EquipmentAdapter", "buyListener is NULL!");
             }

@@ -5,6 +5,7 @@ import android.os.Parcel;
 import androidx.annotation.NonNull;
 import com.example.taskgame.domain.enums.Title;
 import com.example.taskgame.domain.enums.EquipmentType;
+import com.google.firebase.firestore.PropertyName;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,8 @@ public class User implements Parcelable {
     private int PowerPoints;
     private int Experience;
     private int Coins;
+    private int SuccessfulAttackChance;
+    private int AttackCount;
     private List<Integer> Badges;
     private List<Equipment> Equipment;
     public User(){}
@@ -39,85 +42,66 @@ public class User implements Parcelable {
         Avatar = in.readInt();
     }
 
-    public String getUsername() {
-        return Username;
-    }
+    @PropertyName("username")
+    public String getUsername() { return Username; }
+    @PropertyName("username")
+    public void setUsername(String username) { this.Username = username; }
 
-    public void setUsername(String username) {
-        Username = username;
-    }
+    @PropertyName("email")
+    public String getEmail() { return Email; }
+    @PropertyName("email")
+    public void setEmail(String email) { this.Email = email; }
 
-    public String getEmail() {
-        return Email;
-    }
+    @PropertyName("avatar")
+    public int getAvatar() { return Avatar; }
+    @PropertyName("avatar")
+    public void setAvatar(int avatar) { this.Avatar = avatar; }
 
-    public void setEmail(String email) {
-        Email = email;
-    }
+    @PropertyName("title")
+    public Title getTitle() { return Title; }
+    @PropertyName("title")
+    public void setTitle(Title title) { this.Title = title; }
 
-    public int getAvatar() {
-        return Avatar;
-    }
+    @PropertyName("level")
+    public int getLevel() { return Level; }
+    @PropertyName("level")
+    public void setLevel(int level) { this.Level = level; }
 
-    public void setAvatar(int avatar) {
-        Avatar = avatar;
-    }
+    @PropertyName("powerPoints")
+    public int getPowerPoints() { return PowerPoints; }
+    @PropertyName("powerPoints")
+    public void setPowerPoints(int powerPoints) { this.PowerPoints = powerPoints; }
 
-    public Title getTitle() {
-        return Title;
-    }
+    @PropertyName("experience")
+    public int getExperience() { return Experience; }
+    @PropertyName("experience")
+    public void setExperience(int experience) { this.Experience = experience; }
 
-    public void setTitle(Title title) {
-        Title = title;
-    }
+    @PropertyName("coins")
+    public int getCoins() { return Coins; }
+    @PropertyName("coins")
+    public void setCoins(int coins) { this.Coins = coins; }
 
-    public int getLevel() {
-        return Level;
-    }
+    @PropertyName("successfulAttackChance")
+    public int getSuccessfulAttackChance() { return SuccessfulAttackChance; }
+    @PropertyName("successfulAttackChance")
+    public void setSuccessfulAttackChance(int chance) { this.SuccessfulAttackChance = chance; }
 
-    public void setLevel(int level) {
-        Level = level;
-    }
+    @PropertyName("attackCount")
+    public int getAttackCount() { return AttackCount; }
+    @PropertyName("attackCount")
+    public void setAttackCount(int count) { this.AttackCount = count; }
 
-    public int getPowerPoints() {
-        return PowerPoints;
-    }
+    @PropertyName("badges")
+    public List<Integer> getBadges() { return Badges; }
+    @PropertyName("badges")
+    public void setBadges(List<Integer> badges) { this.Badges = badges; }
 
-    public void setPowerPoints(int powerPoints) {
-        PowerPoints = powerPoints;
-    }
+    @PropertyName("equipment")
+    public List<Equipment> getEquipment() { return Equipment; }
+    @PropertyName("equipment")
+    public void setEquipment(List<Equipment> equipment) { this.Equipment = equipment; }
 
-    public int getExperience() {
-        return Experience;
-    }
-
-    public void setExperience(int experience) {
-        Experience = experience;
-    }
-
-    public int getCoins() {
-        return Coins;
-    }
-
-    public void setCoins(int coins) {
-        Coins = coins;
-    }
-
-    public List<Integer> getBadges() {
-        return Badges;
-    }
-
-    public void setBadges(List<Integer> badges) {
-        Badges = badges;
-    }
-
-    public List<Equipment> getEquipment() {
-        return Equipment;
-    }
-
-    public void setEquipment(List<Equipment> equipment) {
-        Equipment = equipment;
-    }
 
     @Override
     public String toString() {
@@ -130,6 +114,8 @@ public class User implements Parcelable {
                 ", PowerPoints=" + PowerPoints +
                 ", Experience=" + Experience +
                 ", Coins=" + Coins +
+                ", SuccessfulAttackChance=" + SuccessfulAttackChance +
+                ", AttackCount=" + AttackCount +
                 ", Badges=" + (Badges != null ? Badges.toString() : "[]") +
                 ", Equipment=" + (Equipment != null ? Equipment.toString() : "[]") +
                 '}';
@@ -148,6 +134,8 @@ public class User implements Parcelable {
         dest.writeInt(PowerPoints);
         dest.writeInt(Experience);
         dest.writeInt(Coins);
+        dest.writeInt(SuccessfulAttackChance);
+        dest.writeInt(AttackCount);
         dest.writeList(Badges != null ? Badges : new ArrayList<>());
         dest.writeList(Equipment != null ? Equipment : new ArrayList<>());
     }

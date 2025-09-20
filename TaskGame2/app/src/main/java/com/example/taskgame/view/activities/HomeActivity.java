@@ -21,9 +21,13 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.taskgame.R;
 import com.example.taskgame.databinding.ActivityHomeBinding;
+import com.example.taskgame.domain.models.Equipment;
 import com.example.taskgame.view.viewmodels.HomeViewModel;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -87,7 +91,7 @@ public class HomeActivity extends AppCompatActivity {
                     navController.navigate(R.id.fragmentEquipmentShop, bundle);
                     return true;
                 }
-            }else {
+            } else {
                 return NavigationUI.onNavDestinationSelected(item, navController);
             }
         });

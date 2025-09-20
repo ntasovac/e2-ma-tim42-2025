@@ -1,5 +1,6 @@
 package com.example.taskgame.view.viewmodels;
 
+import android.content.Context;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
@@ -7,7 +8,9 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.taskgame.data.repositories.UserRepository;
+import com.example.taskgame.domain.models.Equipment;
 import com.example.taskgame.domain.models.User;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -82,5 +85,8 @@ public class ProfileViewModel extends ViewModel {
                 message.setValue("Registration failed: " + e.getMessage());
             }
         });
+    }
+    public void activateEquipment(Context context, int equipmentIndex, Equipment activatedEquipment, OnCompleteListener<Object> listener) {
+        userRepository.activateEquipment(equipmentIndex, activatedEquipment, listener, context);
     }
 }

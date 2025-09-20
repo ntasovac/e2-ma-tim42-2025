@@ -86,6 +86,6 @@ public class EquipmentShopFragment extends Fragment {
         equipment.add(new Equipment(EquipmentType.POTION, "Permanent potion II", (int) Math.ceil(lastBossReward * 10), "Gives a permanent power point increase by 10%.", 10, 1, R.drawable.red_potion, false, true));
         equipment.add(new Equipment(EquipmentType.CLOTHING, "Gloves", (int) Math.ceil(lastBossReward * 0.6), "Gives power point increase by 10% for two boss fights.", 10, 2, R.drawable.gloves, false, false));
         equipment.add(new Equipment(EquipmentType.CLOTHING, "Shield", (int) Math.ceil(lastBossReward * 0.6), "Increases odds of landing a successful attack by 10%.", 10, 2, R.drawable.shield, false, false));
-        equipment.add(new Equipment(EquipmentType.CLOTHING, "Boots", (int) Math.ceil(lastBossReward * 0.4), "Increases odds of getting an additional attack by 40%.", 40, 2, R.drawable.boots, false, false));
+        equipment.add(new Equipment(EquipmentType.CLOTHING, "Boots", (int) Math.ceil(lastBossReward * 0.8), "Increases odds of getting an additional attack by 40%.", 40, 2, R.drawable.boots, false, false));
     }
 }

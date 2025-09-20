@@ -7,7 +7,11 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.taskgame.data.repositories.UserRepository;
+import com.example.taskgame.domain.models.Equipment;
 import com.example.taskgame.domain.models.User;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class HomeViewModel extends ViewModel {
     private final MutableLiveData<String> welcomeText = new MutableLiveData<>();
@@ -31,5 +35,9 @@ public class HomeViewModel extends ViewModel {
     public int getCurrentLevel(){
         var user = userLiveData.getValue();
         return user.getLevel();
+    }
+    public List<Equipment> getOwnedEquipment(){
+        var user = userLiveData.getValue();
+        return user.getEquipment();
     }
 }

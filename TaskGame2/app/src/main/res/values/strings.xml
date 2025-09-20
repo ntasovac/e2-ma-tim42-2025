@@ -30,5 +30,6 @@
     <string name="buy_button">Buy</string>
     <string name="filters">FILTER</string>
     <string name="shop">Shop</string>
+    <string name="activate_button">Activate</string>
 
 </resources>
