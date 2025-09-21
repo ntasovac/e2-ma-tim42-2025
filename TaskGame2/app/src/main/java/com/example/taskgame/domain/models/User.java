@@ -21,6 +21,7 @@ public class User implements Parcelable {
     private int Coins;
     private int SuccessfulAttackChance;
     private int AttackCount;
+    private int LevelThreshold;
     private List<Integer> Badges;
     private List<Equipment> Equipment;
     public User(){}
@@ -33,6 +34,9 @@ public class User implements Parcelable {
         this.PowerPoints = 0;
         this.Experience = 0;
         this.Coins = 0;
+        this.SuccessfulAttackChance = 0;
+        this.AttackCount = 5;
+        this.LevelThreshold = 200;
         this.Badges = new ArrayList<>();
         this.Equipment = new ArrayList<>();
     }
@@ -91,6 +95,14 @@ public class User implements Parcelable {
     public int getAttackCount() { return AttackCount; }
     @PropertyName("attackCount")
     public void setAttackCount(int count) { this.AttackCount = count; }
+    @PropertyName("levelThreshold")
+    public int getLevelThreshold() {
+        return LevelThreshold;
+    }
+    @PropertyName("levelThreshold")
+    public void setLevelThreshold(int levelThreshold) {
+        LevelThreshold = levelThreshold;
+    }
 
     @PropertyName("badges")
     public List<Integer> getBadges() { return Badges; }
@@ -114,6 +126,7 @@ public class User implements Parcelable {
                 ", PowerPoints=" + PowerPoints +
                 ", Experience=" + Experience +
                 ", Coins=" + Coins +
+                ", LevelThreshold=" + LevelThreshold +
                 ", SuccessfulAttackChance=" + SuccessfulAttackChance +
                 ", AttackCount=" + AttackCount +
                 ", Badges=" + (Badges != null ? Badges.toString() : "[]") +
@@ -136,6 +149,7 @@ public class User implements Parcelable {
         dest.writeInt(Coins);
         dest.writeInt(SuccessfulAttackChance);
         dest.writeInt(AttackCount);
+        dest.writeInt(LevelThreshold);
         dest.writeList(Badges != null ? Badges : new ArrayList<>());
         dest.writeList(Equipment != null ? Equipment : new ArrayList<>());
     }
