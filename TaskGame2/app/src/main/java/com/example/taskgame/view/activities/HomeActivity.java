@@ -82,13 +82,13 @@ public class HomeActivity extends AppCompatActivity {
                 Toast.makeText(this, "You have been logged out", Toast.LENGTH_SHORT).show();
                 return true;
             }else if(id == R.id.fragmentEquipmentShop) {
-                int currentLevel = viewModel.getCurrentLevel();
-                if (currentLevel == 0) {
-                    Toast.makeText(this, "Level up required", Toast.LENGTH_SHORT).show();
+                int bossLevel = viewModel.getBossLevel();
+                if (bossLevel == 1) {
+                    Toast.makeText(this, "Defeat level 1 boss to unlock", Toast.LENGTH_SHORT).show();
                     return true;
                 } else {
                     Bundle bundle = new Bundle();
-                    bundle.putInt("userLevel", currentLevel);
+                    bundle.putInt("bossLevel", bossLevel);
                     navController.navigate(R.id.fragmentEquipmentShop, bundle);
                     return true;
                 }
