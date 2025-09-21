@@ -299,7 +299,7 @@ public class UserRepository {
             transaction.update(userRef, "experience", experience + xP);
             if(experience + xP >= levelThreshold){
                 transaction.update(userRef, "level", level+1);
-                transaction.update(userRef, "levelThreshold", (long)Math.round(levelThreshold*5/4.0));
+                transaction.update(userRef, "levelThreshold", (long)Math.round(levelThreshold*5/2.0));
                 if(title != Title.CHALLENGER) {
                     Title nextTitle = titles[nextIndex];
                     transaction.update(userRef, "title", nextTitle.name());
@@ -307,12 +307,11 @@ public class UserRepository {
                 if(level == 0){
                     transaction.update(userRef, "powerPoints", 40);
                 }else{
-                    transaction.update(userRef, "powerPoints", (long)Math.ceil(powerPoints*7/4.0));
+                    transaction.update(userRef, "powerPoints", powerPoints+(long)Math.round(40*Math.pow(7/4.0, level)));
                 }
             }
             return null;
-        });
-
+        }).addOnCompleteListener(listener);
     }
     public LiveData<FirebaseUser> getUserLiveData() {
         return userLiveData;
