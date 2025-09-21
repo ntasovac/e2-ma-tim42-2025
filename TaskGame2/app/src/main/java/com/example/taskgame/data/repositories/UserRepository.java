@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.taskgame.R;
+import com.example.taskgame.domain.enums.Title;
 import com.example.taskgame.domain.models.Equipment;
 import com.example.taskgame.domain.models.User;
 import com.example.taskgame.view.activities.HomeActivity;
@@ -270,6 +271,47 @@ public class UserRepository {
                 }
             }
         });
+    }
+
+    public void earnXP(int xP, OnCompleteListener<Object> listener){
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        DocumentReference userRef = db.collection("users").document(firebaseUser.getUid());
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(userRef);
+            User user = transaction.get(userRef).toObject(User.class);
+            if (!snapshot.exists()) {
+                Log.e("activateEquipment", "User document does not exist!");
+                throw new FirebaseFirestoreException(
+                        "User not found",
+                        FirebaseFirestoreException.Code.ABORTED
+                );
+            }
+
+            long experience = user.getExperience();
+            long levelThreshold = user.getLevelThreshold();
+            long level = user.getLevel();
+            Title title = user.getTitle();
+            Title currentTitle = user.getTitle();
+            Title[] titles = Title.values();
+            int nextIndex = currentTitle.ordinal() + 1;
+            long powerPoints = user.getPowerPoints();
+
+            transaction.update(userRef, "experience", experience + xP);
+            if(experience + xP >= levelThreshold){
+                transaction.update(userRef, "level", level+1);
+                transaction.update(userRef, "levelThreshold", (long)Math.round(levelThreshold*5/2.0));
+                if(title != Title.CHALLENGER) {
+                    Title nextTitle = titles[nextIndex];
+                    transaction.update(userRef, "title", nextTitle.name());
+                }
+                if(level == 0){
+                    transaction.update(userRef, "powerPoints", 40);
+                }else{
+                    transaction.update(userRef, "powerPoints", powerPoints+(long)Math.round(40*Math.pow(7/4.0, level)));
+                }
+            }
+            return null;
+        }).addOnCompleteListener(listener);
     }
     public LiveData<FirebaseUser> getUserLiveData() {
         return userLiveData;

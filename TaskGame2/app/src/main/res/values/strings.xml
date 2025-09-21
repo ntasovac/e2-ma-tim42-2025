@@ -31,5 +31,9 @@
     <string name="filters">FILTER</string>
     <string name="shop">Shop</string>
     <string name="activate_button">Activate</string>
+    <string name="neededXp">XP needed for level up: %1$d</string>
+    <string name="Statistics">Statistics</string>
+    <string name="title_only">%1$s</string>
+    <string name="earn_xp">GAIN XP</string>
 
 </resources>
