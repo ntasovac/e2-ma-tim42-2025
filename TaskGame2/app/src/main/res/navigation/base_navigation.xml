@@ -30,5 +30,11 @@
         android:label="@string/shop"
         tools:layout="@layout/fragment_equipment_shop">
     </fragment>
+    <fragment
+        android:id="@+id/fragmentLevels"
+        android:name="com.example.taskgame.view.fragments.LevelsFragment"
+        android:label="@string/Statistics"
+        tools:layout="@layout/fragment_levels">
+    </fragment>
 
 </navigation>
