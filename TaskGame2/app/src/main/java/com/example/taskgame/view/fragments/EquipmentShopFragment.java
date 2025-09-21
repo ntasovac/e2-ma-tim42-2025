@@ -77,8 +77,8 @@ public class EquipmentShopFragment extends Fragment {
     }
 
     private void prepareEquipmentList(ArrayList<Equipment> equipment) {
-        int level = getArguments().getInt("userLevel", 0);
-        int lastBossReward = (int) Math.ceil(Math.pow(6.0 / 5.0, level - 1) * 200);
+        int level = getArguments().getInt("bossLevel");
+        int lastBossReward = (int) Math.ceil(Math.pow(6.0 / 5.0, level - 2) * 200);
 
         equipment.add(new Equipment(EquipmentType.POTION, "One-time potion I", (int) Math.ceil(lastBossReward * 0.5), "Gives a one time power point increase by 20%.", 20, 1, R.drawable.blue_potion, false, false));
         equipment.add(new Equipment(EquipmentType.POTION, "One-time potion II", (int) Math.ceil(lastBossReward * 0.7), "Gives a one time power point increase by 40%.", 40, 1, R.drawable.green_potion, false, false));
