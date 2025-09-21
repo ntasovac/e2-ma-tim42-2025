@@ -83,7 +83,6 @@
                 android:layout_height="200dp"
                 android:layout_marginTop="16dp"/>
 
-            <!-- 3️⃣  RecyclerView sada slobodno raste jer je u NestedScrollView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/owned_equipment_list"
                 android:layout_width="match_parent"

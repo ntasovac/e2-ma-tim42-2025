@@ -41,6 +41,9 @@ public class LevelsFragment extends Fragment {
             binding.LevelThreshold.setText(getString(R.string.neededXp, user.getLevelThreshold()-user.getExperience()));
             binding.progressLevel.setProgress(viewModel.getProgressPercent());
         });
+        binding.gainXpButton.setOnClickListener(v ->{
+            viewModel.earnXP();
+        });
         return binding.getRoot();
     }
 

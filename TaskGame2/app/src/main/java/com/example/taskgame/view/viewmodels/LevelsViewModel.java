@@ -58,4 +58,14 @@ public class LevelsViewModel extends ViewModel {
         if (percent > 100) percent = 100;
         return percent;
     }
+    public void earnXP(){
+        userRepository.earnXP(100, task -> {
+            if(task.isSuccessful()){
+                Log.d("earnXP", "XP earned!");
+            } else{
+                Exception e = task.getException();
+                Log.e("earnXP", "Error: " + e);
+            }
+        });
+    }
 }

@@ -70,5 +70,14 @@
             android:progressDrawable="@drawable/progress_bar"
             android:layout_marginTop="8dp" />
 
+        <Button
+            android:id="@+id/gain_xp_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:minWidth="120dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/earn_xp"/>
+
     </LinearLayout>
 </ScrollView>

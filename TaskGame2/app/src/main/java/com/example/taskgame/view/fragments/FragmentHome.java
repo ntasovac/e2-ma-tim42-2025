@@ -45,6 +45,7 @@ public class FragmentHome extends Fragment {
                 binding.homeText.setText(text);
             }
         });
+
     }
 
     @Override

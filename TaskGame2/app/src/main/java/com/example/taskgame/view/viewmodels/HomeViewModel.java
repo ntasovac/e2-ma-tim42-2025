@@ -40,4 +40,5 @@ public class HomeViewModel extends ViewModel {
         var user = userLiveData.getValue();
         return user.getEquipment();
     }
+
 }
