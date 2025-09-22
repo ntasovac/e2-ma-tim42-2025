@@ -32,8 +32,14 @@
     <string name="shop">Shop</string>
     <string name="activate_button">Activate</string>
     <string name="neededXp">XP needed for level up: %1$d</string>
-    <string name="Statistics">Statistics</string>
+    <string name="LevelView">Level</string>
     <string name="title_only">%1$s</string>
     <string name="earn_xp">GAIN XP</string>
+    <string name="fight">FIGHT</string>
+    <string name="boss_fight">Boss Fight</string>
+    <string name="upgrade_button">UPGRADE</string>
+    <string name="upgrade_cost">Upgrade cost: %1$d</string>
+    <string name="win">YOU WIN!</string>
+    <string name="claim_prize">CLAIM PRIZE</string>
 
 </resources>

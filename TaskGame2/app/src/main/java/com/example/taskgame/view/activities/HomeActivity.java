@@ -15,6 +15,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
@@ -68,6 +69,13 @@ public class HomeActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
 
+        if (getIntent() != null) {
+            String target = getIntent().getStringExtra("openFragment");
+            if ("HomeFragment".equals(target)) {
+                navController.navigate(R.id.fragmentHome);
+            }
+        }
+
         viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
         navView.setNavigationItemSelectedListener(item -> {
@@ -89,7 +97,12 @@ public class HomeActivity extends AppCompatActivity {
                 } else {
                     Bundle bundle = new Bundle();
                     bundle.putInt("bossLevel", bossLevel);
-                    navController.navigate(R.id.fragmentEquipmentShop, bundle);
+                    NavOptions navOptions = new NavOptions.Builder()
+                            .setPopUpTo(R.id.fragmentHome, false)
+                            .setLaunchSingleTop(true)
+                            .build();
+
+                    navController.navigate(R.id.fragmentEquipmentShop, bundle, navOptions);
                     return true;
                 }
             } else {
