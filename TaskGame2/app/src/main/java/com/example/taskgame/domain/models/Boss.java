@@ -5,18 +5,18 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 
-import java.util.ArrayList;
-
 public class Boss implements Parcelable {
 
     private int Level;
     private int CoinReward;
     private int XPThreshold;
+    private double bonus;
 
     public Boss(){
         Level = 1;
         CoinReward = 200;
         XPThreshold = 200;
+        bonus = 0;
     }
     protected Boss(Parcel in){
         Level = in.readInt();
@@ -48,6 +48,14 @@ public class Boss implements Parcelable {
         this.XPThreshold = XPThreshold;
     }
 
+    public double getBonus() {
+        return bonus;
+    }
+
+    public void setBonus(int bonus) {
+        this.bonus = bonus;
+    }
+
     @Override
     public int describeContents() { return 0; }
 
@@ -56,6 +64,7 @@ public class Boss implements Parcelable {
         dest.writeInt(Level);
         dest.writeInt(CoinReward);
         dest.writeInt(XPThreshold);
+        dest.writeDouble(bonus);
     }
 
     public static final Creator<Boss> CREATOR = new Creator<Boss>() {

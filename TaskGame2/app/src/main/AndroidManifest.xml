@@ -16,6 +16,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TaskGame">
         <activity
+            android:name=".view.activities.BossFightActivity"
+            android:exported="false" />
+        <activity
             android:name=".view.activities.LoginActivity"
             android:exported="false" />
         <activity

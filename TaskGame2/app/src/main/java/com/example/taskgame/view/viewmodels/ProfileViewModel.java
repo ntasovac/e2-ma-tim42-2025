@@ -89,4 +89,7 @@ public class ProfileViewModel extends ViewModel {
     public void activateEquipment(Context context, int equipmentIndex, Equipment activatedEquipment, OnCompleteListener<Object> listener) {
         userRepository.activateEquipment(equipmentIndex, activatedEquipment, listener, context);
     }
+    public void upgradeEquipment(int equipmentIndex, OnCompleteListener<Object> listener){
+        userRepository.upgradeEquipment(equipmentIndex, listener);
+    }
 }

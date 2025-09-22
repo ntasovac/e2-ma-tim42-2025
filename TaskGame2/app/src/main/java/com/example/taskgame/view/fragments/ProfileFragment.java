@@ -92,7 +92,7 @@ public class ProfileFragment extends Fragment {
                 }
 
 
-                adapter = new OwnedEquipmentListAdapter(equipment, (index, item) -> {
+                adapter = new OwnedEquipmentListAdapter(equipment, true, (index, item) -> {
                     Log.d("eq", String.valueOf(item.isActivated()));
                     viewModel.activateEquipment(getContext(), index, item, task -> {
                         if (task.isSuccessful()) {
@@ -100,6 +100,14 @@ public class ProfileFragment extends Fragment {
                             Toast.makeText(getContext(), "Activation successful!", Toast.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(getContext(), "Something went wrong!", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }, (index, item) ->{
+                    viewModel.upgradeEquipment(index, task -> {
+                        if (task.isSuccessful()) {
+                            Toast.makeText(getContext(), "Upgrade successful!", Toast.LENGTH_SHORT).show();
+                        }else {
+                            Toast.makeText(getContext(), "Not enough coins!", Toast.LENGTH_SHORT).show();
                         }
                     });
                 });

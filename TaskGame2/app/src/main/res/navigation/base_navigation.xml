@@ -33,8 +33,14 @@
     <fragment
         android:id="@+id/fragmentLevels"
         android:name="com.example.taskgame.view.fragments.LevelsFragment"
-        android:label="@string/Statistics"
+        android:label="@string/LevelView"
         tools:layout="@layout/fragment_levels">
+    </fragment>
+    <fragment
+        android:id="@+id/fragmentEquipmentActivation"
+        android:name="com.example.taskgame.view.fragments.EquipmentActivationFragment"
+        android:label="@string/boss_fight"
+        tools:layout="@layout/fragment_equipment_activation">
     </fragment>
 
 </navigation>

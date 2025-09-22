@@ -16,7 +16,10 @@
         android:title="@string/shop" />
     <item
         android:id="@+id/fragmentLevels"
-        android:title="@string/Statistics" />
+        android:title="@string/LevelView" />
+    <item
+        android:id="@+id/fragmentEquipmentActivation"
+        android:title="@string/boss_fight" />
 
     <item
         android:id="@+id/nav_logout"

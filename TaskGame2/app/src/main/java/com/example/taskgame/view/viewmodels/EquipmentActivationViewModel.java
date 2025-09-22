@@ -1,25 +1,28 @@
 package com.example.taskgame.view.viewmodels;
 
+import android.content.Context;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.taskgame.data.repositories.UserRepository;
+import com.example.taskgame.domain.models.Equipment;
 import com.example.taskgame.domain.models.User;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
-public class LevelsViewModel extends ViewModel {
-
-    private final MutableLiveData<User> userLiveData;
+public class EquipmentActivationViewModel extends ViewModel {
     private final UserRepository userRepository;
+    private final MutableLiveData<User> userLiveData;
     private ListenerRegistration listenerRegistration;
 
-    public LevelsViewModel(){
+    public EquipmentActivationViewModel(){
         userRepository = new UserRepository();
         userLiveData = userRepository.getCurrentUser();
 
@@ -41,30 +44,11 @@ public class LevelsViewModel extends ViewModel {
                     });
         }
     }
+
     public LiveData<User> getUser() {
         return userLiveData;
     }
-
-    public void setUser(User u) {
-        userLiveData.setValue(u);
-    }
-
-    public int getProgressPercent() {
-        User u = userLiveData.getValue();
-        if (u == null || u.getLevelThreshold() <= 0) return 0;
-        int percent = (int) ((u.getExperience() * 100f) / u.getLevelThreshold());
-        if (percent < 0) percent = 0;
-        if (percent > 100) percent = 100;
-        return percent;
-    }
-    public void earnXP(){
-        userRepository.earnXP(100, task -> {
-            if(task.isSuccessful()){
-                Log.d("earnXP", "XP earned!");
-            } else{
-                Exception e = task.getException();
-                Log.e("earnXP", "Error: " + e);
-            }
-        });
+    public void activateEquipment(Context context, int equipmentIndex, Equipment activatedEquipment, OnCompleteListener<Object> listener) {
+        userRepository.activateEquipment(equipmentIndex, activatedEquipment, listener, context);
     }
 }

@@ -11,7 +11,7 @@ public class Equipment implements Parcelable {
     private String Name;
     private int Price;
     private String Description;
-    private int EffectAmount;
+    private double EffectAmount;
     private int UsageCount;
     private int Image;
     private boolean IsActivated;
@@ -19,7 +19,7 @@ public class Equipment implements Parcelable {
 
     public Equipment(){}
 
-    public Equipment(EquipmentType type, String name, int price, String description, int effectAmount, int usageCount, int image, boolean isActivated, boolean isEffectPermanent) {
+    public Equipment(EquipmentType type, String name, int price, String description, double effectAmount, int usageCount, int image, boolean isActivated, boolean isEffectPermanent) {
         Type = type;
         Name = name;
         Price = price;
@@ -52,9 +52,9 @@ public class Equipment implements Parcelable {
     public void setDescription(String description) { this.Description = description; }
 
     @PropertyName("effectAmount")
-    public int getEffectAmount() { return EffectAmount; }
+    public double getEffectAmount() { return EffectAmount; }
     @PropertyName("effectAmount")
-    public void setEffectAmount(int effectAmount) { this.EffectAmount = effectAmount; }
+    public void setEffectAmount(double effectAmount) { this.EffectAmount = effectAmount; }
 
     @PropertyName("usageCount")
     public int getUsageCount() { return UsageCount; }
@@ -83,7 +83,7 @@ public class Equipment implements Parcelable {
         Name = in.readString();
         Price = in.readInt();
         Description = in.readString();
-        EffectAmount = in.readInt();
+        EffectAmount = in.readDouble();
         UsageCount = in.readInt();
         Image = in.readInt();
         IsActivated = in.readByte() != 0; // boolean -> byte
@@ -96,7 +96,7 @@ public class Equipment implements Parcelable {
         dest.writeString(Name);
         dest.writeInt(Price);
         dest.writeString(Description);
-        dest.writeInt(EffectAmount);
+        dest.writeDouble(EffectAmount);
         dest.writeInt(UsageCount);
         dest.writeInt(Image);
         dest.writeByte((byte) (IsActivated ? 1 : 0));
