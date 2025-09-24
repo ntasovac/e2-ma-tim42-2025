@@ -65,7 +65,7 @@ public class EquipmentActivationFragment extends Fragment {
                 for (Equipment eq : equipment) {
                     Log.d("EquipmentLog", "Name: " + eq.getName() + ", Activated: " + eq.isActivated());
                 }
-                adapter = new OwnedEquipmentListAdapter(equipment, false, (index, item) -> {
+                adapter = new OwnedEquipmentListAdapter(OwnedEquipmentListAdapter.Mode.USER,equipment, false, (index, item) -> {
                     Log.d("eq", String.valueOf(item.isActivated()));
                     viewModel.activateEquipment(getContext(), index, item, task -> {
                         if (task.isSuccessful()) {

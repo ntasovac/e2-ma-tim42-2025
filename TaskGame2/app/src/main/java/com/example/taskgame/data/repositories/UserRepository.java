@@ -115,6 +115,29 @@ public class UserRepository {
         return liveData;
     }
 
+    public MutableLiveData<User> getUserByEmail(String email) {
+        MutableLiveData<User> liveData = new MutableLiveData<>();
+
+        db.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        User user = querySnapshot.getDocuments()
+                                .get(0)
+                                .toObject(User.class);
+                        liveData.setValue(user);
+                    } else {
+                        liveData.setValue(null);
+                    }
+                })
+                .addOnFailureListener(e -> liveData.setValue(null));
+
+        return liveData;
+    }
+
+
     public void changePassword(String currentPassword, String newPassword, ChangePasswordCallback callback) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
@@ -545,10 +568,10 @@ public class UserRepository {
                     boolean found = false;
                     Long powerPointsVal = snapshot.getLong("powerPoints");
                     long powerPoints = powerPointsVal != null ? powerPointsVal : 0L;
-                    double oldPowerPoints = powerPoints * (100/(100.0 + rewardEquipment.getEffectAmount()-10);
+                    double oldPowerPoints = powerPoints * (100/(100.0 + rewardEquipment.getEffectAmount()-10));
                     Long successVal = snapshot.getLong("successfulAttackChance");
                     long successfulAttackChance = successVal != null ? successVal : 0L;
-                    double oldSuccessfulAttackChance = successfulAttackChance* (100/(100.0 + rewardEquipment.getEffectAmount()-10);
+                    double oldSuccessfulAttackChance = successfulAttackChance* (100/(100.0 + rewardEquipment.getEffectAmount()-10));
                     Long attackCountVal = snapshot.getLong("attackCount");
                     long attackCount = attackCountVal != null ? attackCountVal : 0L;
 
@@ -688,12 +711,202 @@ public class UserRepository {
 
 
     }
+    public void searchUsersByUsername(String query, UserSearchCallback callback) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("users")
+                .orderBy("username")
+                .startAt(query)
+                .endAt(query + "\uf8ff")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<User> users = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        User u = doc.toObject(User.class);
+                        if (u != null) users.add(u);
+                    }
+                    callback.onResult(users);
+                })
+                .addOnFailureListener(e -> callback.onResult(new ArrayList<>()));
+    }
+
+    public void sendFriendRequest(User sender, User recipient, OnCompleteListener<Object> listener) {
+
+        String recipientEmail = recipient.getEmail();
+
+        db.collection("users")
+                .whereEqualTo("email", recipientEmail)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+
+                        DocumentReference userRef =
+                                querySnapshot.getDocuments().get(0).getReference();
+
+                        db.runTransaction(transaction -> {
+                            DocumentSnapshot snapshot = transaction.get(userRef);
+                            if (!snapshot.exists()) {
+                                throw new FirebaseFirestoreException(
+                                        "Recipient not found",
+                                        FirebaseFirestoreException.Code.ABORTED
+                                );
+                            }
+
+                            List<User> friendRequestsList =
+                                    (List<User>) snapshot.get("friendRequests");
+
+                            if (friendRequestsList == null) {
+                                friendRequestsList = new ArrayList<>();
+                            }
+
+                            friendRequestsList.add(sender);
+
+                            transaction.update(userRef, "friendRequests", friendRequestsList);
+                            return null;
+                        }).addOnCompleteListener(listener);
+
+                    } else {
+                        if (listener != null) {
+                            listener.onComplete(
+                                    Tasks.forException(
+                                            new Exception("Recipient with email "
+                                                    + recipientEmail + " not found")));
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (listener != null) {
+                        listener.onComplete(Tasks.forException(e));
+                    }
+                });
+    }
+
+
+    public void acceptFriendRequest(User sender, OnCompleteListener<Object> listener){
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        DocumentReference userRef = db.collection("users").document(user.getUid());
+
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(userRef);
+
+            List<User> friendsList = (List<User>) snapshot.get("friends");
+
+            if (friendsList == null) {
+                friendsList = new ArrayList<>();
+            }
+            friendsList.add(sender);
+
+            transaction.update(userRef, "friends", friendsList);
+
+            List<Map<String,Object>> requests =
+                    (List<Map<String,Object>>) snapshot.get("friendRequests");
+            if (requests == null) {
+                requests = new ArrayList<>();
+            }
+            Iterator<Map<String,Object>> iterator = requests.iterator();
+            while (iterator.hasNext()) {
+                Map<String,Object> req = iterator.next();
+                String email = (String) req.get("email");
+                if (sender.getEmail().equals(email)) {
+                    iterator.remove();
+                    break;
+                }
+            }
+
+            transaction.update(userRef, "friendRequests", requests);
+
+            return null;
+        }).addOnCompleteListener(listener);
+    }
+
+    public void declineFriendRequest(User sender, OnCompleteListener<Object> listener){
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        DocumentReference userRef = db.collection("users").document(user.getUid());
+
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(userRef);
+
+            List<Map<String, Object>> requests =
+                    (List<Map<String, Object>>) snapshot.get("friendRequests");
+            if (requests == null) {
+                requests = new ArrayList<>();
+            }
+            Iterator<Map<String, Object>> iterator = requests.iterator();
+            while (iterator.hasNext()) {
+                Map<String, Object> req = iterator.next();
+                Map<String, Object> senderMap = (Map<String, Object>) req.get("sender");
+                if (senderMap != null &&
+                        sender.getEmail().equals(senderMap.get("email"))) {
+                    iterator.remove();
+                    break;
+                }
+            }
+
+            transaction.update(userRef, "friendRequests", requests);
+
+            return null;
+        }).addOnCompleteListener(listener);
+    }
+
+    public void addFriend(User sender, User recipient, OnCompleteListener<Object> listener){
+        String senderEmail = sender.getEmail();
+        db.collection("users")
+                .whereEqualTo("email", senderEmail)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+
+                        DocumentReference userRef =
+                                querySnapshot.getDocuments().get(0).getReference();
+
+                        db.runTransaction(transaction -> {
+                            DocumentSnapshot snapshot = transaction.get(userRef);
+                            if (!snapshot.exists()) {
+                                throw new FirebaseFirestoreException(
+                                        "Sender not found",
+                                        FirebaseFirestoreException.Code.ABORTED
+                                );
+                            }
+
+                            List<User> friendList =
+                                    (List<User>) snapshot.get("friends");
+
+                            if (friendList == null) {
+                                friendList = new ArrayList<>();
+                            }
+
+                            friendList.add(recipient);
+
+                            transaction.update(userRef, "friends", friendList);
+                            return null;
+                        }).addOnCompleteListener(listener);
+
+                    } else {
+                        if (listener != null) {
+                            listener.onComplete(
+                                    Tasks.forException(
+                                            new Exception("Recipient with email "
+                                                    + senderEmail + " not found")));
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (listener != null) {
+                        listener.onComplete(Tasks.forException(e));
+                    }
+                });
+    }
+
     public LiveData<FirebaseUser> getUserLiveData() {
         return userLiveData;
     }
 
     public LiveData<String> getErrorLiveData() {
         return errorLiveData;
+    }
+    public interface UserSearchCallback {
+        void onResult(List<User> users);
     }
 
     public interface RegisterCallback {

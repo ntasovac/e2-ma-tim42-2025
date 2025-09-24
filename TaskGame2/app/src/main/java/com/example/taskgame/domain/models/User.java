@@ -24,6 +24,8 @@ public class User implements Parcelable {
     private int LevelThreshold;
     private List<Integer> Badges;
     private List<Equipment> Equipment;
+    private  List<User> Friends;
+    private List<User> FriendRequests;
     public User(){}
     public User(String username, String email, int avatar){
         this.Username = username;
@@ -39,6 +41,8 @@ public class User implements Parcelable {
         this.LevelThreshold = 200;
         this.Badges = new ArrayList<>();
         this.Equipment = new ArrayList<>();
+        this.Friends = new ArrayList<>();
+        this.FriendRequests = new ArrayList<>();
     }
     protected User(Parcel in){
         Username = in.readString();
@@ -113,26 +117,25 @@ public class User implements Parcelable {
     public List<Equipment> getEquipment() { return Equipment; }
     @PropertyName("equipment")
     public void setEquipment(List<Equipment> equipment) { this.Equipment = equipment; }
-
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "Username='" + Username + '\'' +
-                ", Email='" + Email + '\'' +
-                ", Avatar=" + Avatar +
-                ", Title=" + Title +
-                ", Level=" + Level +
-                ", PowerPoints=" + PowerPoints +
-                ", Experience=" + Experience +
-                ", Coins=" + Coins +
-                ", LevelThreshold=" + LevelThreshold +
-                ", SuccessfulAttackChance=" + SuccessfulAttackChance +
-                ", AttackCount=" + AttackCount +
-                ", Badges=" + (Badges != null ? Badges.toString() : "[]") +
-                ", Equipment=" + (Equipment != null ? Equipment.toString() : "[]") +
-                '}';
+    @PropertyName("friends")
+    public List<User> getFriends() {
+        return Friends;
     }
+    @PropertyName("friends")
+    public void setFriends(List<User> friends) {
+        Friends = friends;
+    }
+
+    @PropertyName("friendRequests")
+    public List<User> getFriendRequests() {
+        return FriendRequests;
+    }
+
+    @PropertyName("friendRequests")
+    public void setFriendRequests(List<User> friendRequests) {
+        this.FriendRequests = friendRequests;
+    }
+
 
     @Override
     public int describeContents() { return 0; }
@@ -152,6 +155,8 @@ public class User implements Parcelable {
         dest.writeInt(LevelThreshold);
         dest.writeList(Badges != null ? Badges : new ArrayList<>());
         dest.writeList(Equipment != null ? Equipment : new ArrayList<>());
+        dest.writeList(Friends != null ? Friends : new ArrayList<>());
+        dest.writeList(FriendRequests != null ? FriendRequests : new ArrayList<>());
     }
 
     public static final Creator<User> CREATOR = new Creator<User>() {

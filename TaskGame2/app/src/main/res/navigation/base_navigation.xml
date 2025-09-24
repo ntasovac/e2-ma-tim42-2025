@@ -42,5 +42,41 @@
         android:label="@string/boss_fight"
         tools:layout="@layout/fragment_equipment_activation">
     </fragment>
+    <fragment
+        android:id="@+id/fragmentFriends"
+        android:name="com.example.taskgame.view.fragments.FriendsFragment"
+        android:label="@string/friends"
+        tools:layout="@layout/fragment_friends">
+        <action
+            android:id="@+id/action_friendsFragment_to_searchFragment"
+            app:destination="@id/fragmentSearch" />
+        <action
+            android:id="@+id/action_friendsFragment_to_friendsProfileFragment"
+            app:destination="@id/fragmentFriendsProfile" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragmentSearch"
+        android:name="com.example.taskgame.view.fragments.SearchFragment"
+        android:label="@string/search_fragment"
+        tools:layout="@layout/fragment_search">
+        <action
+            android:id="@+id/action_searchFragment_to_friendsProfileFragment"
+            app:destination="@id/fragmentFriendsProfile" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragmentFriendsProfile"
+        android:name="com.example.taskgame.view.fragments.FriendsProfileFragment"
+        android:label="Friend Profile"
+        tools:layout="@layout/fragment_friends_profile">
+        <argument
+            android:name="friendEmail"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragmentFriendRequests"
+        android:name="com.example.taskgame.view.fragments.FriendRequestsFragment"
+        android:label="@string/friend_requests"
+        tools:layout="@layout/fragment_friend_requests">
+    </fragment>
 
 </navigation>

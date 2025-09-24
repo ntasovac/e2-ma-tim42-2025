@@ -39,13 +39,6 @@ public class EquipmentListFragment extends ListFragment {
         this.buyClickListener = listener;
     }
 
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        binding = FragmentEquipmentListBinding.inflate(inflater, container, false);
-        return binding.getRoot();
-    }
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,6 +47,13 @@ public class EquipmentListFragment extends ListFragment {
             adapter = new EquipmentListAdapter(getActivity(), mEquipment);
             setListAdapter(adapter);
         }
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        binding = FragmentEquipmentListBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override

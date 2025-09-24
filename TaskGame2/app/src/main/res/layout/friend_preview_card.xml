@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/friend_preview_card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    android:foreground="?android:attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/friend_profile_image"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:scaleType="centerCrop"
+            android:layout_marginEnd="12dp"
+            android:clipToOutline="true"/>
+
+        <TextView
+            android:id="@+id/friend_username"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/username_hint"
+            android:textSize="18sp"
+            android:textColor="@android:color/black"
+            android:ellipsize="end"
+            android:singleLine="true"/>
+
+        <Button
+            android:id="@+id/invite_button"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:text="@string/invite"
+            android:paddingHorizontal="12dp"
+            style="?attr/borderlessButtonStyle" />
+        <Button
+            android:id="@+id/add_friend_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/add_friend"
+            android:paddingHorizontal="12dp"
+            style="?attr/borderlessButtonStyle"
+            android:visibility="gone"/>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

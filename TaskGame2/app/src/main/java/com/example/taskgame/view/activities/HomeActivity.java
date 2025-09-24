@@ -63,7 +63,8 @@ public class HomeActivity extends AppCompatActivity {
                 R.id.fragmentCategory,
                 R.id.fragmentProfile,
                 R.id.fragmentEquipmentShop,
-                R.id.fragmentLevels
+                R.id.fragmentLevels,
+                R.id.fragmentFriends
         ).setOpenableLayout(drawer).build();
 
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
