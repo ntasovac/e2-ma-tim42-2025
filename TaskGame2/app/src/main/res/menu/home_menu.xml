@@ -20,6 +20,12 @@
     <item
         android:id="@+id/fragmentEquipmentActivation"
         android:title="@string/boss_fight" />
+    <item
+        android:id="@+id/fragmentFriends"
+        android:title="@string/friends" />
+    <item
+        android:id="@+id/fragmentFriendRequests"
+        android:title="@string/friend_requests" />
 
     <item
         android:id="@+id/nav_logout"

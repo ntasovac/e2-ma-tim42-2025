@@ -41,5 +41,14 @@
     <string name="upgrade_cost">Upgrade cost: %1$d</string>
     <string name="win">YOU WIN!</string>
     <string name="claim_prize">CLAIM PRIZE</string>
+    <string name="invite">INVITE TO ALLIANCE</string>
+    <string name="search">SEARCH</string>
+    <string name="friends">Friends</string>
+    <string name="search_fragment">Search</string>
+    <string name="add_friend">ADD AS FRIEND</string>
+    <string name="friend_requests">Friend requests</string>
+    <string name="alliance">Alliance</string>
+    <string name="create_alliance">Create alliance</string>
+    <string name="alliance_name_hint">Alliance name</string>
 
 </resources>

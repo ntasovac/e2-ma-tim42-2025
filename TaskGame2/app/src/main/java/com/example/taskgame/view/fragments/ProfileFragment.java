@@ -92,7 +92,7 @@ public class ProfileFragment extends Fragment {
                 }
 
 
-                adapter = new OwnedEquipmentListAdapter(equipment, true, (index, item) -> {
+                adapter = new OwnedEquipmentListAdapter(OwnedEquipmentListAdapter.Mode.USER ,equipment, true, (index, item) -> {
                     Log.d("eq", String.valueOf(item.isActivated()));
                     viewModel.activateEquipment(getContext(), index, item, task -> {
                         if (task.isSuccessful()) {

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -23,13 +24,23 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class UserRepository {
     private final FirebaseAuth auth;
@@ -77,19 +88,43 @@ public class UserRepository {
         auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        if (auth.getCurrentUser() != null && auth.getCurrentUser().isEmailVerified()) {
-                            userLiveData.postValue(auth.getCurrentUser());
+                        FirebaseUser currentUser = auth.getCurrentUser();
+                        if (currentUser != null && currentUser.isEmailVerified()) {
+
+                            FirebaseMessaging.getInstance().getToken()
+                                    .addOnCompleteListener(tokenTask -> {
+                                        if (tokenTask.isSuccessful()) {
+                                            String token = tokenTask.getResult();
+                                            FirebaseFirestore.getInstance()
+                                                    .collection("users")
+                                                    .document(currentUser.getUid())
+                                                    .update("fcmToken", token)
+                                                    .addOnSuccessListener(aVoid ->
+                                                            Log.d("FCM", "Token saved after login"))
+                                                    .addOnFailureListener(e ->
+                                                            Log.e("FCM", "Failed to save token after login", e));
+                                        } else {
+                                            Log.w("FCM", "Fetching FCM registration token failed",
+                                                    tokenTask.getException());
+                                        }
+                                    });
+
+                            userLiveData.postValue(currentUser);
+
                         } else {
                             errorLiveData.postValue("Please verify your email before login.");
                             auth.signOut();
                         }
                     } else {
                         errorLiveData.postValue(
-                                task.getException() != null ? task.getException().getMessage() : "Unknown error"
+                                task.getException() != null
+                                        ? task.getException().getMessage()
+                                        : "Unknown error"
                         );
                     }
                 });
     }
+
 
     public MutableLiveData<User> getCurrentUser() {
         MutableLiveData<User> liveData = new MutableLiveData<>();
@@ -114,6 +149,29 @@ public class UserRepository {
 
         return liveData;
     }
+
+    public MutableLiveData<User> getUserByEmail(String email) {
+        MutableLiveData<User> liveData = new MutableLiveData<>();
+
+        db.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        User user = querySnapshot.getDocuments()
+                                .get(0)
+                                .toObject(User.class);
+                        liveData.setValue(user);
+                    } else {
+                        liveData.setValue(null);
+                    }
+                })
+                .addOnFailureListener(e -> liveData.setValue(null));
+
+        return liveData;
+    }
+
 
     public void changePassword(String currentPassword, String newPassword, ChangePasswordCallback callback) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -545,10 +603,10 @@ public class UserRepository {
                     boolean found = false;
                     Long powerPointsVal = snapshot.getLong("powerPoints");
                     long powerPoints = powerPointsVal != null ? powerPointsVal : 0L;
-                    double oldPowerPoints = powerPoints * (100/(100.0 + rewardEquipment.getEffectAmount()-10);
+                    double oldPowerPoints = powerPoints * (100/(100.0 + rewardEquipment.getEffectAmount()-10));
                     Long successVal = snapshot.getLong("successfulAttackChance");
                     long successfulAttackChance = successVal != null ? successVal : 0L;
-                    double oldSuccessfulAttackChance = successfulAttackChance* (100/(100.0 + rewardEquipment.getEffectAmount()-10);
+                    double oldSuccessfulAttackChance = successfulAttackChance* (100/(100.0 + rewardEquipment.getEffectAmount()-10));
                     Long attackCountVal = snapshot.getLong("attackCount");
                     long attackCount = attackCountVal != null ? attackCountVal : 0L;
 
@@ -688,12 +746,343 @@ public class UserRepository {
 
 
     }
+    public void searchUsersByUsername(String query, UserSearchCallback callback) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("users")
+                .orderBy("username")
+                .startAt(query)
+                .endAt(query + "\uf8ff")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<User> users = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        User u = doc.toObject(User.class);
+                        if (u != null) users.add(u);
+                    }
+                    callback.onResult(users);
+                })
+                .addOnFailureListener(e -> callback.onResult(new ArrayList<>()));
+    }
+
+    public void sendFriendRequest(User sender, User recipient, OnCompleteListener<Object> listener) {
+
+        String recipientEmail = recipient.getEmail();
+
+        db.collection("users")
+                .whereEqualTo("email", recipientEmail)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+
+                        DocumentReference userRef =
+                                querySnapshot.getDocuments().get(0).getReference();
+
+                        db.runTransaction(transaction -> {
+                            DocumentSnapshot snapshot = transaction.get(userRef);
+                            if (!snapshot.exists()) {
+                                throw new FirebaseFirestoreException(
+                                        "Recipient not found",
+                                        FirebaseFirestoreException.Code.ABORTED
+                                );
+                            }
+
+                            List<User> friendRequestsList =
+                                    (List<User>) snapshot.get("friendRequests");
+
+                            if (friendRequestsList == null) {
+                                friendRequestsList = new ArrayList<>();
+                            }
+
+                            friendRequestsList.add(sender);
+
+                            transaction.update(userRef, "friendRequests", friendRequestsList);
+                            return null;
+                        }).addOnCompleteListener(listener);
+
+                    } else {
+                        if (listener != null) {
+                            listener.onComplete(
+                                    Tasks.forException(
+                                            new Exception("Recipient with email "
+                                                    + recipientEmail + " not found")));
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (listener != null) {
+                        listener.onComplete(Tasks.forException(e));
+                    }
+                });
+    }
+
+
+    public void acceptFriendRequest(User sender, OnCompleteListener<Object> listener){
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        DocumentReference userRef = db.collection("users").document(user.getUid());
+
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(userRef);
+
+            List<User> friendsList = (List<User>) snapshot.get("friends");
+
+            if (friendsList == null) {
+                friendsList = new ArrayList<>();
+            }
+            friendsList.add(sender);
+
+            transaction.update(userRef, "friends", friendsList);
+
+            List<Map<String,Object>> requests =
+                    (List<Map<String,Object>>) snapshot.get("friendRequests");
+            if (requests == null) {
+                requests = new ArrayList<>();
+            }
+            Iterator<Map<String,Object>> iterator = requests.iterator();
+            while (iterator.hasNext()) {
+                Map<String,Object> req = iterator.next();
+                String email = (String) req.get("email");
+                if (sender.getEmail().equals(email)) {
+                    iterator.remove();
+                    break;
+                }
+            }
+
+            transaction.update(userRef, "friendRequests", requests);
+
+            return null;
+        }).addOnCompleteListener(listener);
+    }
+
+    public void declineFriendRequest(User sender, OnCompleteListener<Object> listener){
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        DocumentReference userRef = db.collection("users").document(user.getUid());
+
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(userRef);
+
+            List<Map<String, Object>> requests =
+                    (List<Map<String, Object>>) snapshot.get("friendRequests");
+            if (requests == null) {
+                requests = new ArrayList<>();
+            }
+            Iterator<Map<String, Object>> iterator = requests.iterator();
+            while (iterator.hasNext()) {
+                Map<String, Object> req = iterator.next();
+                Map<String, Object> senderMap = (Map<String, Object>) req.get("sender");
+                if (senderMap != null &&
+                        sender.getEmail().equals(senderMap.get("email"))) {
+                    iterator.remove();
+                    break;
+                }
+            }
+
+            transaction.update(userRef, "friendRequests", requests);
+
+            return null;
+        }).addOnCompleteListener(listener);
+    }
+
+    public void addFriend(User sender, User recipient, OnCompleteListener<Object> listener){
+        String senderEmail = sender.getEmail();
+        db.collection("users")
+                .whereEqualTo("email", senderEmail)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+
+                        DocumentReference userRef =
+                                querySnapshot.getDocuments().get(0).getReference();
+
+                        db.runTransaction(transaction -> {
+                            DocumentSnapshot snapshot = transaction.get(userRef);
+                            if (!snapshot.exists()) {
+                                throw new FirebaseFirestoreException(
+                                        "Sender not found",
+                                        FirebaseFirestoreException.Code.ABORTED
+                                );
+                            }
+
+                            List<User> friendList =
+                                    (List<User>) snapshot.get("friends");
+
+                            if (friendList == null) {
+                                friendList = new ArrayList<>();
+                            }
+
+                            friendList.add(recipient);
+
+                            transaction.update(userRef, "friends", friendList);
+                            return null;
+                        }).addOnCompleteListener(listener);
+
+                    } else {
+                        if (listener != null) {
+                            listener.onComplete(
+                                    Tasks.forException(
+                                            new Exception("Recipient with email "
+                                                    + senderEmail + " not found")));
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (listener != null) {
+                        listener.onComplete(Tasks.forException(e));
+                    }
+                });
+    }
+
+    public void inviteFriend(int index, User friend, @NonNull OnCompleteListener<Object> listener) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        DocumentReference userRef = db.collection("users").document(currentUser.getUid());
+        if (currentUser == null) {
+            listener.onComplete(Tasks.forException(new Exception("Not logged in")));
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("users")
+                .document(currentUser.getUid())
+                .get()
+                .addOnSuccessListener(documentSnapshot ->{
+                    User user = documentSnapshot.toObject(User.class);
+                    String inviteId = UUID.randomUUID().toString();
+                    Map<String, Object> invite = new HashMap<>();
+                    invite.put("allianceName", user.getAlliance());
+                    invite.put("senderEmail", user.getEmail());
+                    invite.put("senderName", user.getUsername());
+                    invite.put("receiverEmail", friend.getEmail());
+                    invite.put("receiverName", friend.getUsername());
+                    invite.put("status", "pending");
+
+                    db.collection("invites").document(inviteId)
+                            .set(invite)
+                            .addOnSuccessListener(aVoid -> {
+                                sendPushNotification(inviteId, friend.getEmail(), friend.getUsername(), user.getUsername(), user.getAlliance(), user.getEmail());
+                                listener.onComplete(Tasks.forResult(null));
+                            })
+                            .addOnFailureListener(e -> listener.onComplete(Tasks.forException(e)));
+                }).addOnFailureListener(e -> listener.onComplete(Tasks.forException(e)));
+    }
+
+    public void sendPushNotification(String invitedId, String receiverEmail,
+                                      String receiverName,
+                                      String senderName,
+                                      String allianceName, String senderEmail) {
+
+        OkHttpClient client = new OkHttpClient();
+
+        String json = "{"
+                + "\"inviteId\":\"" + invitedId + "\","
+                + "\"receiverEmail\":\"" + receiverEmail + "\","
+                + "\"receiverName\":\"" + receiverName + "\","
+                + "\"senderName\":\"" + senderName + "\","
+                + "\"allianceName\":\"" + allianceName + "\","
+                + "\"senderEmail\":\"" + senderEmail + "\""
+                + "}";
+
+        RequestBody body = RequestBody.create(
+                json,
+                okhttp3.MediaType.parse("application/json; charset=utf-8")
+        );
+
+        Request request = new Request.Builder()
+                .url("https://subdepressed-unmagnanimously-tori.ngrok-free.dev/sendInvite")
+                .post(body)
+                .build();
+
+        Log.d("Invite", "Sending POST to server");
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.e("Invite", "Failed to call API", e);
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    Log.d("Invite", "Notification sent successfully");
+                } else {
+                    Log.e("Invite", "Server error: " + response.code());
+                }
+            }
+        });
+    }
+
+    public void sendAcceptedNotification(Context context,
+                                          String senderEmail,
+                                          String allianceName,
+                                          String accepterName) {
+        OkHttpClient client = new OkHttpClient();
+
+        String json = "{"
+                + "\"receiverEmail\":\"" + senderEmail + "\","
+                + "\"accepterName\":\"" + accepterName + "\","
+                + "\"allianceName\":\"" + allianceName + "\""
+                + "}";
+
+
+        RequestBody body = RequestBody.create(
+                json.toString(),
+                okhttp3.MediaType.parse("application/json; charset=utf-8")
+        );
+
+        Request request = new Request.Builder()
+                .url("https://subdepressed-unmagnanimously-tori.ngrok-free.dev/sendAccept")
+                .post(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override public void onFailure(Call call, IOException e) {
+                Log.e("InviteAction", "Failed to notify sender", e);
+            }
+            @Override public void onResponse(Call call, Response response) {
+                Log.d("InviteAction", "Sender notified: " + response.code());
+            }
+        });
+    }
+
+
+    public void acceptInvite(String email, String allianceName){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        DocumentSnapshot userDoc = querySnapshot.getDocuments().get(0);
+                        String userId = userDoc.getId();
+
+                        db.collection("users")
+                                .document(userId)
+                                .update("alliance", allianceName)
+                                .addOnSuccessListener(aVoid ->
+                                        Log.d("AllianceRepo", "Alliance updated for " + email))
+                                .addOnFailureListener(e ->
+                                        Log.e("AllianceRepo", "Failed to update alliance", e));
+                    } else {
+                        Log.w("AllianceRepo", "No user found with email: " + email);
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Log.e("AllianceRepo", "Error fetching user", e));
+    }
+
+
     public LiveData<FirebaseUser> getUserLiveData() {
         return userLiveData;
     }
 
     public LiveData<String> getErrorLiveData() {
         return errorLiveData;
+    }
+    public interface UserSearchCallback {
+        void onResult(List<User> users);
     }
 
     public interface RegisterCallback {

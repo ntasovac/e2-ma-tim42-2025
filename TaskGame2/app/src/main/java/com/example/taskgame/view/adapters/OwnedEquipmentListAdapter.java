@@ -26,6 +26,9 @@ import java.util.function.Consumer;
 
 public class OwnedEquipmentListAdapter extends RecyclerView.Adapter<OwnedEquipmentListAdapter.EquipmentViewHolder> {
 
+    public enum Mode { USER, FRIEND }
+
+    private final Mode mode;
     private ArrayList<Equipment> aEquipment;
     private OnActivateClickListener activateListener;
     private OnUpgradeClickListener upgradeListener;
@@ -38,16 +41,18 @@ public class OwnedEquipmentListAdapter extends RecyclerView.Adapter<OwnedEquipme
     public interface OnUpgradeClickListener {
         void onUpgradeClicked(int position, Equipment equipment);
     }
-    public OwnedEquipmentListAdapter(ArrayList<Equipment> equipment, boolean showUpgrade) {
+    public OwnedEquipmentListAdapter(Mode mode, ArrayList<Equipment> equipment, boolean showUpgrade) {
         this.aEquipment = equipment;
         this.showUpgrade = showUpgrade;
         bossRepository = new BossRepository();
+        this.mode = mode;
     }
-    public OwnedEquipmentListAdapter(ArrayList<Equipment> equipment, boolean showUpgrade, OnActivateClickListener activateListener, OnUpgradeClickListener upgradeListener) {
+    public OwnedEquipmentListAdapter(Mode mode, ArrayList<Equipment> equipment, boolean showUpgrade, OnActivateClickListener activateListener, OnUpgradeClickListener upgradeListener) {
         this.aEquipment = equipment;
         this.activateListener = activateListener;
         this.upgradeListener = upgradeListener;
         this.showUpgrade = showUpgrade;
+        this.mode = mode;
         bossRepository = new BossRepository();
     }
 
@@ -105,41 +110,47 @@ public class OwnedEquipmentListAdapter extends RecyclerView.Adapter<OwnedEquipme
                 throw new IllegalStateException("Invalid equipment: " + equipment.getName());
         }
 
-        if (equipment.isActivated()) {
-            holder.activateButton.setEnabled(false);
-            holder.activateButton.setText("Activated");
-        } else {
-            holder.activateButton.setEnabled(true);
-            holder.activateButton.setText("Activate");
-        }
-
-        holder.itemView.setOnClickListener(v -> {
-            Log.i("TaskGame", "Clicked: " + equipment.getName());
-            Toast.makeText(v.getContext(), "Clicked: " + equipment.getName(), Toast.LENGTH_SHORT).show();
-        });
-
-        holder.activateButton.setOnClickListener(v -> {
-            Log.d("EquipmentAdapter", "Activate button clicked for: " + equipment.getName());
-            if (activateListener != null) {
-                activateListener.onActivateClicked(holder.getAdapterPosition(), equipment);
+        if(mode == Mode.USER) {
+            if (equipment.isActivated()) {
                 holder.activateButton.setEnabled(false);
                 holder.activateButton.setText("Activated");
             } else {
-                Log.e("EquipmentAdapter", "activateListener is NULL!");
+                holder.activateButton.setEnabled(true);
+                holder.activateButton.setText("Activate");
             }
-        });
-        if (showUpgrade && equipment.getType() == EquipmentType.WEAPON) {
-            Log.d("Upgrade: ","visible");
-            holder.upgradeButton.setVisibility(View.VISIBLE);
-            if (upgradeListener != null) {
-                holder.upgradeButton.setOnClickListener(v ->
-                        upgradeListener.onUpgradeClicked(position, equipment)
-                );
+
+            holder.itemView.setOnClickListener(v -> {
+                Log.i("TaskGame", "Clicked: " + equipment.getName());
+                Toast.makeText(v.getContext(), "Clicked: " + equipment.getName(), Toast.LENGTH_SHORT).show();
+            });
+
+            holder.activateButton.setOnClickListener(v -> {
+                Log.d("EquipmentAdapter", "Activate button clicked for: " + equipment.getName());
+                if (activateListener != null) {
+                    activateListener.onActivateClicked(holder.getAdapterPosition(), equipment);
+                    holder.activateButton.setEnabled(false);
+                    holder.activateButton.setText("Activated");
+                } else {
+                    Log.e("EquipmentAdapter", "activateListener is NULL!");
+                }
+            });
+            if (showUpgrade && equipment.getType() == EquipmentType.WEAPON) {
+                Log.d("Upgrade: ", "visible");
+                holder.upgradeButton.setVisibility(View.VISIBLE);
+                if (upgradeListener != null) {
+                    holder.upgradeButton.setOnClickListener(v ->
+                            upgradeListener.onUpgradeClicked(position, equipment)
+                    );
+                }
+                holder.upgradeCost.setVisibility(View.VISIBLE);
+                getUpgradeCost(cost -> holder.upgradeCost.setText("Upgrade cost: " + cost));
+            } else {
+                Log.d("Upgrade: ", "invisible");
+                holder.upgradeButton.setVisibility(View.GONE);
+                holder.upgradeCost.setVisibility(View.GONE);
             }
-            holder.upgradeCost.setVisibility(View.VISIBLE);
-            getUpgradeCost(cost -> holder.upgradeCost.setText("Upgrade cost: " + cost));
-        } else {
-            Log.d("Upgrade: ","invisible");
+        }else{
+            holder.activateButton.setVisibility(View.GONE);
             holder.upgradeButton.setVisibility(View.GONE);
             holder.upgradeCost.setVisibility(View.GONE);
         }
