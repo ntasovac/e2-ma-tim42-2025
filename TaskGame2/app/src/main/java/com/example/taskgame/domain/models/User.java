@@ -26,6 +26,10 @@ public class User implements Parcelable {
     private List<Equipment> Equipment;
     private  List<User> Friends;
     private List<User> FriendRequests;
+    private String Alliance;
+    private boolean IsAllianceOwner;
+    private String FCMToken;
+
     public User(){}
     public User(String username, String email, int avatar){
         this.Username = username;
@@ -43,6 +47,9 @@ public class User implements Parcelable {
         this.Equipment = new ArrayList<>();
         this.Friends = new ArrayList<>();
         this.FriendRequests = new ArrayList<>();
+        this.Alliance = "";
+        this.IsAllianceOwner = false;
+        this.FCMToken = "";
     }
     protected User(Parcel in){
         Username = in.readString();
@@ -136,6 +143,29 @@ public class User implements Parcelable {
         this.FriendRequests = friendRequests;
     }
 
+    public String getFCMToken() {
+        return FCMToken;
+    }
+
+    public void setFCMToken(String FCMToken) {
+        this.FCMToken = FCMToken;
+    }
+
+    public String getAlliance() {
+        return Alliance;
+    }
+
+    public void setAlliance(String alliance) {
+        Alliance = alliance;
+    }
+
+    public boolean isAllianceOwner() {
+        return IsAllianceOwner;
+    }
+
+    public void setAllianceOwner(boolean allianceOwner) {
+        IsAllianceOwner = allianceOwner;
+    }
 
     @Override
     public int describeContents() { return 0; }
@@ -157,6 +187,9 @@ public class User implements Parcelable {
         dest.writeList(Equipment != null ? Equipment : new ArrayList<>());
         dest.writeList(Friends != null ? Friends : new ArrayList<>());
         dest.writeList(FriendRequests != null ? FriendRequests : new ArrayList<>());
+        dest.writeString(Alliance);
+        dest.writeBoolean(IsAllianceOwner);
+        dest.writeString(FCMToken);
     }
 
     public static final Creator<User> CREATOR = new Creator<User>() {

@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.taskgame.data.repositories.AllianceRepository;
 import com.example.taskgame.data.repositories.UserRepository;
 import com.example.taskgame.domain.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -20,11 +21,13 @@ import java.util.List;
 public class FriendsViewModel extends ViewModel {
 
     private final UserRepository userRepository;
+    private final AllianceRepository allianceRepository;
     private final MutableLiveData<User> userLiveData;
     private ListenerRegistration listenerRegistration;
 
     public FriendsViewModel() {
         userRepository = new UserRepository();
+        allianceRepository = new AllianceRepository();
         userLiveData = userRepository.getCurrentUser();
 
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -52,10 +55,9 @@ public class FriendsViewModel extends ViewModel {
     }
 
     public void inviteFriend(int userIndex, User friend, OnCompleteListener<Object> listener) {
-        /*List<User> current = friendsLiveData.getValue();
-        if (current != null) {
-            current.add(friend);
-            friendsLiveData.setValue(new ArrayList<>(current));
-        }*/
+        userRepository.inviteFriend(userIndex, friend, listener);
+    }
+    public void createAlliance(String name, OnCompleteListener<String> listener){
+        allianceRepository.createAlliance(name, listener);
     }
 }

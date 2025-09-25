@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -23,13 +24,23 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.messaging.FirebaseMessaging;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class UserRepository {
     private final FirebaseAuth auth;
@@ -77,19 +88,43 @@ public class UserRepository {
         auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        if (auth.getCurrentUser() != null && auth.getCurrentUser().isEmailVerified()) {
-                            userLiveData.postValue(auth.getCurrentUser());
+                        FirebaseUser currentUser = auth.getCurrentUser();
+                        if (currentUser != null && currentUser.isEmailVerified()) {
+
+                            FirebaseMessaging.getInstance().getToken()
+                                    .addOnCompleteListener(tokenTask -> {
+                                        if (tokenTask.isSuccessful()) {
+                                            String token = tokenTask.getResult();
+                                            FirebaseFirestore.getInstance()
+                                                    .collection("users")
+                                                    .document(currentUser.getUid())
+                                                    .update("fcmToken", token)
+                                                    .addOnSuccessListener(aVoid ->
+                                                            Log.d("FCM", "Token saved after login"))
+                                                    .addOnFailureListener(e ->
+                                                            Log.e("FCM", "Failed to save token after login", e));
+                                        } else {
+                                            Log.w("FCM", "Fetching FCM registration token failed",
+                                                    tokenTask.getException());
+                                        }
+                                    });
+
+                            userLiveData.postValue(currentUser);
+
                         } else {
                             errorLiveData.postValue("Please verify your email before login.");
                             auth.signOut();
                         }
                     } else {
                         errorLiveData.postValue(
-                                task.getException() != null ? task.getException().getMessage() : "Unknown error"
+                                task.getException() != null
+                                        ? task.getException().getMessage()
+                                        : "Unknown error"
                         );
                     }
                 });
     }
+
 
     public MutableLiveData<User> getCurrentUser() {
         MutableLiveData<User> liveData = new MutableLiveData<>();
@@ -897,6 +932,147 @@ public class UserRepository {
                     }
                 });
     }
+
+    public void inviteFriend(int index, User friend, @NonNull OnCompleteListener<Object> listener) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        DocumentReference userRef = db.collection("users").document(currentUser.getUid());
+        if (currentUser == null) {
+            listener.onComplete(Tasks.forException(new Exception("Not logged in")));
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("users")
+                .document(currentUser.getUid())
+                .get()
+                .addOnSuccessListener(documentSnapshot ->{
+                    User user = documentSnapshot.toObject(User.class);
+                    String inviteId = UUID.randomUUID().toString();
+                    Map<String, Object> invite = new HashMap<>();
+                    invite.put("allianceName", user.getAlliance());
+                    invite.put("senderEmail", user.getEmail());
+                    invite.put("senderName", user.getUsername());
+                    invite.put("receiverEmail", friend.getEmail());
+                    invite.put("receiverName", friend.getUsername());
+                    invite.put("status", "pending");
+
+                    db.collection("invites").document(inviteId)
+                            .set(invite)
+                            .addOnSuccessListener(aVoid -> {
+                                sendPushNotification(inviteId, friend.getEmail(), friend.getUsername(), user.getUsername(), user.getAlliance(), user.getEmail());
+                                listener.onComplete(Tasks.forResult(null));
+                            })
+                            .addOnFailureListener(e -> listener.onComplete(Tasks.forException(e)));
+                }).addOnFailureListener(e -> listener.onComplete(Tasks.forException(e)));
+    }
+
+    public void sendPushNotification(String invitedId, String receiverEmail,
+                                      String receiverName,
+                                      String senderName,
+                                      String allianceName, String senderEmail) {
+
+        OkHttpClient client = new OkHttpClient();
+
+        String json = "{"
+                + "\"inviteId\":\"" + invitedId + "\","
+                + "\"receiverEmail\":\"" + receiverEmail + "\","
+                + "\"receiverName\":\"" + receiverName + "\","
+                + "\"senderName\":\"" + senderName + "\","
+                + "\"allianceName\":\"" + allianceName + "\","
+                + "\"senderEmail\":\"" + senderEmail + "\""
+                + "}";
+
+        RequestBody body = RequestBody.create(
+                json,
+                okhttp3.MediaType.parse("application/json; charset=utf-8")
+        );
+
+        Request request = new Request.Builder()
+                .url("https://subdepressed-unmagnanimously-tori.ngrok-free.dev/sendInvite")
+                .post(body)
+                .build();
+
+        Log.d("Invite", "Sending POST to server");
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.e("Invite", "Failed to call API", e);
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    Log.d("Invite", "Notification sent successfully");
+                } else {
+                    Log.e("Invite", "Server error: " + response.code());
+                }
+            }
+        });
+    }
+
+    public void sendAcceptedNotification(Context context,
+                                          String senderEmail,
+                                          String allianceName,
+                                          String accepterName) {
+        OkHttpClient client = new OkHttpClient();
+
+        String json = "{"
+                + "\"receiverEmail\":\"" + senderEmail + "\","
+                + "\"accepterName\":\"" + accepterName + "\","
+                + "\"allianceName\":\"" + allianceName + "\""
+                + "}";
+
+
+        RequestBody body = RequestBody.create(
+                json.toString(),
+                okhttp3.MediaType.parse("application/json; charset=utf-8")
+        );
+
+        Request request = new Request.Builder()
+                .url("https://subdepressed-unmagnanimously-tori.ngrok-free.dev/sendAccept")
+                .post(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override public void onFailure(Call call, IOException e) {
+                Log.e("InviteAction", "Failed to notify sender", e);
+            }
+            @Override public void onResponse(Call call, Response response) {
+                Log.d("InviteAction", "Sender notified: " + response.code());
+            }
+        });
+    }
+
+
+    public void acceptInvite(String email, String allianceName){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        DocumentSnapshot userDoc = querySnapshot.getDocuments().get(0);
+                        String userId = userDoc.getId();
+
+                        db.collection("users")
+                                .document(userId)
+                                .update("alliance", allianceName)
+                                .addOnSuccessListener(aVoid ->
+                                        Log.d("AllianceRepo", "Alliance updated for " + email))
+                                .addOnFailureListener(e ->
+                                        Log.e("AllianceRepo", "Failed to update alliance", e));
+                    } else {
+                        Log.w("AllianceRepo", "No user found with email: " + email);
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Log.e("AllianceRepo", "Error fetching user", e));
+    }
+
 
     public LiveData<FirebaseUser> getUserLiveData() {
         return userLiveData;

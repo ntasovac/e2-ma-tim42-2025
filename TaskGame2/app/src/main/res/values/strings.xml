@@ -47,5 +47,8 @@
     <string name="search_fragment">Search</string>
     <string name="add_friend">ADD AS FRIEND</string>
     <string name="friend_requests">Friend requests</string>
+    <string name="alliance">Alliance</string>
+    <string name="create_alliance">Create alliance</string>
+    <string name="alliance_name_hint">Alliance name</string>
 
 </resources>
