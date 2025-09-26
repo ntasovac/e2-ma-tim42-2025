@@ -91,5 +91,61 @@ app.post("/sendAccept", async (req, res) => {
   }
 });
 
+app.post("/sendAllianceMessage", async (req, res) => {
+  const { allianceName, senderEmail, senderName, messageText } = req.body;
+
+  if (!allianceName || !senderEmail || !messageText) {
+    return res.status(400).send("Missing required fields");
+  }
+
+  try {
+    const snap = await admin.firestore()
+      .collection("users")
+      .where("alliance", "==", allianceName)
+      .get();
+
+    if (snap.empty) {
+      return res.status(404).send("No members found");
+    }
+
+    const tokens = [];
+    snap.forEach(doc => {
+      const userEmail = doc.get("email");
+      const token = doc.get("fcmToken");
+      if (token && userEmail !== senderEmail) {
+        tokens.push(token);
+      }
+    });
+
+    if (tokens.length === 0) {
+      return res.status(400).send("No valid FCM tokens");
+    }
+
+    await Promise.all(tokens.map(token =>
+      admin.messaging().send({
+        token,
+        notification: {
+          title: `New message in ${allianceName}`,
+          body: `${senderName}: ${messageText}`,
+        },
+        data: {
+          type: "allianceMessage",
+          allianceName,
+          senderEmail,
+          senderName,
+          text: messageText,
+        },
+      })
+    ));
+
+    console.log(`Alliance message sent to ${tokens.length} members`);
+    res.send(`Sent to ${tokens.length} members`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err.message);
+  }
+});
+
+
 
 app.listen(3000, () => console.log("Server running on port 3000"));

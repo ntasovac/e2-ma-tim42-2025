@@ -1045,6 +1045,51 @@ public class UserRepository {
         });
     }
 
+    public void sendAllianceMessageNotification(
+            String allianceName,
+            String senderEmail,
+            String senderName,
+            String messageText) {
+
+        OkHttpClient client = new OkHttpClient();
+
+        String json = "{"
+                + "\"allianceName\":\"" + allianceName + "\","
+                + "\"senderEmail\":\"" + senderEmail + "\","
+                + "\"senderName\":\"" + senderName + "\","
+                + "\"messageText\":\"" + messageText + "\""
+                + "}";
+
+        RequestBody body = RequestBody.create(
+                json,
+                okhttp3.MediaType.parse("application/json; charset=utf-8")
+        );
+
+        Request request = new Request.Builder()
+                .url("https://subdepressed-unmagnanimously-tori.ngrok-free.dev/sendAllianceMessage")
+                .post(body)
+                .build();
+
+        Log.d("AllianceMsg", "Sending alliance message notification…");
+
+        client.newCall(request).enqueue(new okhttp3.Callback() {
+            @Override
+            public void onFailure(@NonNull okhttp3.Call call, @NonNull IOException e) {
+                Log.e("AllianceMsg", "Failed to call API", e);
+            }
+
+            @Override
+            public void onResponse(@NonNull okhttp3.Call call,
+                                   @NonNull okhttp3.Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    Log.d("AllianceMsg", "Notification sent successfully");
+                } else {
+                    Log.e("AllianceMsg", "Server error: " + response.code());
+                }
+            }
+        });
+    }
+
 
     public void acceptInvite(String email, String allianceName){
         FirebaseFirestore db = FirebaseFirestore.getInstance();

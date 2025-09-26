@@ -42,6 +42,8 @@ public class MessagingService extends FirebaseMessagingService {
                     inviteId, allianceName, senderEmail);
         } else if ("inviteAccepted".equals(type)) {
             showSimpleNotification(title, body);
+        } else if ("allianceMessage".equals(type)) {
+            showSimpleNotification(title, body);
         } else {
             showSimpleNotification(title != null ? title : "Notification",
                     body != null ? body : "");

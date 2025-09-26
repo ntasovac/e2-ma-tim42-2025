@@ -88,5 +88,15 @@
             app:argType="string" />
     </fragment>
 
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.example.taskgame.view.fragments.ChatFragment"
+        android:label="Alliance Chat"
+        tools:layout="@layout/fragment_chat">
+        <argument
+            android:name="allianceName"
+            app:argType="string" />
+    </fragment>
+
 
 </navigation>

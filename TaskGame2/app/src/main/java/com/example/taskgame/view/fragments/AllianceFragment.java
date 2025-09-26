@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -11,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -44,10 +46,21 @@ public class AllianceFragment extends Fragment {
 
         allianceRepository = new AllianceRepository();
 
-        String allianceName = null;
+
+        String allianceName;
         if (getArguments() != null) {
             allianceName = getArguments().getString("name");
+            Button chatButton = view.findViewById(R.id.chat_button);
+            chatButton.setOnClickListener(v -> {
+                Bundle bundle = new Bundle();
+                bundle.putString("allianceName", allianceName);
+                NavHostFragment.findNavController(AllianceFragment.this)
+                        .navigate(R.id.chatFragment, bundle);
+            });
+        } else {
+            allianceName = null;
         }
+
 
         ownerCard = view.findViewById(R.id.owner_card);
         membersRecycler = view.findViewById(R.id.members_recycler);
