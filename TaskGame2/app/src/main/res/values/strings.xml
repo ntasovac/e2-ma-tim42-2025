@@ -50,5 +50,10 @@
     <string name="alliance">Alliance</string>
     <string name="create_alliance">Create alliance</string>
     <string name="alliance_name_hint">Alliance name</string>
+    <string name="delete">Delete</string>
+    <string name="leave">Leave</string>
+    <string name="owner">OWNER</string>
+    <string name="members">MEMBERS</string>
+    <string name="chat">CHAT</string>
 
 </resources>

@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.taskgame.data.repositories.AllianceRepository;
 import com.example.taskgame.data.repositories.UserRepository;
+import com.example.taskgame.domain.models.Alliance;
 import com.example.taskgame.domain.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -59,5 +60,14 @@ public class FriendsViewModel extends ViewModel {
     }
     public void createAlliance(String name, OnCompleteListener<String> listener){
         allianceRepository.createAlliance(name, listener);
+    }
+    public LiveData<Alliance> getAllianceByName(String name){
+        return allianceRepository.getAllianceByName(name);
+    }
+    public void deleteAlliance(String name){
+        allianceRepository.deleteAlliance(name);
+    }
+    public void leaveAlliance(String name){
+        allianceRepository.leaveAlliance(name);
     }
 }

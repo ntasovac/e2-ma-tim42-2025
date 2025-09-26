@@ -17,13 +17,15 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.taskgame.R;
+import com.example.taskgame.data.repositories.AllianceRepository;
+import com.example.taskgame.data.repositories.UserRepository;
 import com.example.taskgame.domain.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FriendListAdapter extends RecyclerView.Adapter<FriendListAdapter.FriendViewHolder> {
-    public enum Mode { FRIENDS, SEARCH }
+    public enum Mode { FRIENDS, SEARCH, ALLIANCE }
 
     private final Mode mode;
     private final List<User> users;
@@ -31,6 +33,8 @@ public class FriendListAdapter extends RecyclerView.Adapter<FriendListAdapter.Fr
     private OnAddFriendClickListener addFriendListener;
     private final String currentUserEmail;
     private final List<String> currentFriendEmails;
+    private final UserRepository userRepository;
+    private final AllianceRepository allianceRepository;
 
     public interface OnInviteClickListener {
         void onInviteClicked(int position, User user);
@@ -47,6 +51,8 @@ public class FriendListAdapter extends RecyclerView.Adapter<FriendListAdapter.Fr
         this.currentFriendEmails = currentFriendEmails;
         this.inviteListener = inviteClickListener;
         this.addFriendListener = addFriendClickListener;
+        this.userRepository = new UserRepository();
+        this.allianceRepository = new AllianceRepository();
     }
 
     public void setOnInviteClickListener(OnInviteClickListener listener) {
@@ -88,17 +94,35 @@ public class FriendListAdapter extends RecyclerView.Adapter<FriendListAdapter.Fr
 
 
         if(mode == Mode.FRIENDS){
-            holder.inviteButton.setVisibility(View.VISIBLE);
-            holder.addFriendButton.setVisibility(View.GONE);
-            holder.inviteButton.setOnClickListener(v -> {
-                Log.d("FriendListAdapter", "Invite button clicked for: " + user.getUsername());
-                if (inviteListener != null) {
-                    inviteListener.onInviteClicked(holder.getAdapterPosition(), user);
-                } else {
-                    Log.e("FriendListAdapter", "inviteListener is NULL!");
-                }
-        });
-        }else {
+            userRepository.getCurrentUser().observeForever(currentUser -> {
+                allianceRepository.getAllianceByName(currentUser.getAlliance()).observeForever(alliance -> {
+                    if(alliance == null){
+
+                        return;
+                    }
+                    boolean isInAlliance = false;
+                    for (User member: alliance.getMembers()) {
+                        if(user.getEmail().equals(member.getEmail())) {
+                            isInAlliance = true;
+                            break;
+                        }
+                    }
+                    if (currentUser.isAllianceOwner() && !isInAlliance) {
+                        holder.inviteButton.setVisibility(View.VISIBLE);
+                        holder.inviteButton.setOnClickListener(v -> {
+                            Log.d("FriendListAdapter", "Invite button clicked for: " + user.getUsername());
+                            if (inviteListener != null) {
+                                inviteListener.onInviteClicked(holder.getAdapterPosition(), user);
+                                holder.inviteButton.setVisibility(View.GONE);
+                            } else {
+                                Log.e("FriendListAdapter", "inviteListener is NULL!");
+                            }
+                        });
+                    }
+                    holder.addFriendButton.setVisibility(View.GONE);
+                });
+            });
+        }else if(mode == Mode.SEARCH){
 
             boolean isCurrentUser = user.getEmail().equals(currentUserEmail);
             boolean isAlreadyFriend = currentFriendEmails.contains(user.getEmail());
@@ -113,6 +137,9 @@ public class FriendListAdapter extends RecyclerView.Adapter<FriendListAdapter.Fr
                         addFriendListener.onAddFriendClicked(holder.getAdapterPosition(), user);
                 });
             }
+        }else{
+            holder.addFriendButton.setVisibility(View.GONE);
+            holder.inviteButton.setVisibility(View.GONE);
         }
     }
 

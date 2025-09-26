@@ -3,6 +3,8 @@ package com.example.taskgame.domain.models;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.firebase.firestore.PropertyName;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,12 +12,16 @@ public class Alliance implements Parcelable {
     private  String Name;
     private User Owner;
     private List<User> Members;
+    @PropertyName("isMissionActive")
+    private boolean isMissionActive;
 
     public Alliance(String name, User owner){
         this.Name = name;
         this.Owner = owner;
         this.Members = new ArrayList<>();
+        this.isMissionActive = false;
     }
+    public Alliance(){}
 
     public String getName() {
         return Name;
@@ -40,10 +46,22 @@ public class Alliance implements Parcelable {
     public void setMembers(List<User> members) {
         Members = members;
     }
+
+    @PropertyName("isMissionActive")
+    public boolean isMissionActive() {
+        return isMissionActive;
+    }
+
+    @PropertyName("isMissionActive")
+    public void setMissionActive(boolean missionActive) {
+        isMissionActive = missionActive;
+    }
+
     protected Alliance(Parcel in) {
         Name = in.readString();
         Owner = in.readParcelable(User.class.getClassLoader());
         Members = new ArrayList<>();
+        isMissionActive = in.readBoolean();
         in.readList(Members, User.class.getClassLoader());
     }
 
@@ -52,6 +70,7 @@ public class Alliance implements Parcelable {
         dest.writeString(Name);
         dest.writeParcelable(Owner, flags);
         dest.writeList(Members);
+        dest.writeBoolean(isMissionActive);
     }
 
     @Override

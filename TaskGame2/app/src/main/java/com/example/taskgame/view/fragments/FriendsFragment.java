@@ -26,6 +26,7 @@ import com.example.taskgame.view.adapters.FriendListAdapter;
 import com.example.taskgame.view.adapters.OwnedEquipmentListAdapter;
 import com.example.taskgame.view.viewmodels.FriendsViewModel;
 import com.example.taskgame.view.viewmodels.ProfileViewModel;
+import com.google.firebase.auth.internal.GenericIdpActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +68,8 @@ public class FriendsFragment extends Fragment {
         binding.allianceName.findViewById(R.id.alliance_name);
         binding.allianceNameInput.findViewById(R.id.alliance_name_input);
         binding.createAllianceButton.findViewById(R.id.create_alliance_button);
+        binding.deleteAllianceButton.findViewById(R.id.delete_alliance_button);
+        binding.leaveAllianceButton.findViewById(R.id.leave_alliance_button);
 
         viewModel.getUser().observe(getViewLifecycleOwner(), user -> {
             if (user != null) {
@@ -83,23 +86,69 @@ public class FriendsFragment extends Fragment {
                             return;
                         }
 
-                        viewModel.createAlliance(allianceName, task->{
-                            if(task.isSuccessful()){
-                                Toast.makeText(getContext(), "Alliance created", Toast.LENGTH_SHORT).show();
-                                binding.allianceName.setText(task.getResult());
-                                binding.createAllianceButton.setVisibility(View.GONE);
-                                binding.allianceNameInput.setVisibility(View.GONE);
-                                binding.allianceName.setVisibility(View.VISIBLE);
-                                binding.allianceCard.setVisibility(View.VISIBLE);
-                            }else{
-                                Toast.makeText(getContext(), "Error while creating alliance", Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                        viewModel.getAllianceByName(allianceName)
+                                .observe(getViewLifecycleOwner(), alliance -> {
+                                    if (alliance != null) {
+                                        Toast.makeText(getContext(),
+                                                "Alliance name is already taken",
+                                                Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        viewModel.createAlliance(allianceName, task -> {
+                                            if (task.isSuccessful()) {
+                                                Toast.makeText(getContext(),
+                                                        "Alliance created",
+                                                        Toast.LENGTH_SHORT).show();
+                                                binding.allianceName.setText(task.getResult());
+                                                binding.createAllianceButton.setVisibility(View.GONE);
+                                                binding.allianceNameInput.setVisibility(View.GONE);
+                                                binding.allianceName.setVisibility(View.VISIBLE);
+                                                binding.allianceCard.setVisibility(View.VISIBLE);
+                                                binding.deleteAllianceButton.setVisibility(View.VISIBLE);
+                                            } else {
+                                                Toast.makeText(getContext(),
+                                                        "Error while creating alliance",
+                                                        Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    }
+                                });
                     });
                 }else{
-                    binding.allianceName.setText(user.getAlliance());
-                    binding.allianceName.setVisibility(View.VISIBLE);
-                    binding.allianceCard.setVisibility(View.VISIBLE);
+                    viewModel.getAllianceByName(user.getAlliance())
+                            .observe(getViewLifecycleOwner(), alliance -> {
+                                Log.d("isMissionActive", String.valueOf(alliance.isMissionActive()));
+                                binding.allianceName.setText(user.getAlliance());
+                                binding.allianceName.setVisibility(View.VISIBLE);
+                                binding.allianceCard.setVisibility(View.VISIBLE);
+                                binding.allianceCard.setOnClickListener(v -> {
+                                    Bundle bundle = new Bundle();
+                                    bundle.putString("name", user.getAlliance());
+                                    NavHostFragment.findNavController(FriendsFragment.this)
+                                            .navigate(R.id.allianceFragment, bundle);
+                                });
+                                if (user.isAllianceOwner()) {
+                                    binding.deleteAllianceButton.setVisibility(View.VISIBLE);
+                                    binding.deleteAllianceButton.setOnClickListener(v -> {
+                                        if(!alliance.isMissionActive()) {
+                                            viewModel.deleteAlliance(alliance.getName());
+                                            binding.allianceCard.setVisibility(View.GONE);
+                                        }else{
+                                            Toast.makeText(getContext(), "You can't leave while mission is active!", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+
+                                } else {
+                                    binding.leaveAllianceButton.setVisibility(View.VISIBLE);
+                                    binding.leaveAllianceButton.setOnClickListener(v -> {
+                                        if(!alliance.isMissionActive()) {
+                                            viewModel.leaveAlliance(alliance.getName());
+                                            binding.allianceCard.setVisibility(View.GONE);
+                                        }else{
+                                            Toast.makeText(getContext(), "You can't leave while mission is active!", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                }
+                            });
                 }
 
                 friends = new ArrayList<>(user.getFriends());

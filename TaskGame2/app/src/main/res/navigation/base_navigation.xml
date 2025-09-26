@@ -78,5 +78,15 @@
         android:label="@string/friend_requests"
         tools:layout="@layout/fragment_friend_requests">
     </fragment>
+    <fragment
+        android:id="@+id/allianceFragment"
+        android:name="com.example.taskgame.view.fragments.AllianceFragment"
+        android:label="Alliance"
+        tools:layout="@layout/fragment_alliance">
+        <argument
+            android:name="name"
+            app:argType="string" />
+    </fragment>
+
 
 </navigation>
