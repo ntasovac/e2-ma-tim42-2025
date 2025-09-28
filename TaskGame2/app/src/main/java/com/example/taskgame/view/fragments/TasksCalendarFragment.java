@@ -1,18 +1,17 @@
 package com.example.taskgame.view.fragments;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.example.taskgame.R;
 import com.example.taskgame.databinding.FragmentTasksCalendarBinding;
 import com.example.taskgame.domain.models.Task;
 import com.example.taskgame.view.adapters.TaskRowAdapter;
@@ -29,23 +28,46 @@ import java.util.Locale;
 
 public class TasksCalendarFragment extends Fragment {
 
+    public interface TaskActionListener {
+        void openTaskUpdate(Task task);
+    }
+
+    private TaskActionListener listener;
+
     private FragmentTasksCalendarBinding binding;
     private TaskViewModel vm;
     private final TaskRowAdapter adapter = new TaskRowAdapter(new TaskRowAdapter.Listener() {
-        @Override public void onTaskClicked(Task t) {
-            // TODO: navigate to TaskDetails (not requested yet)
+        @Override
+        public void onTaskClicked(Task t) {
+            if (listener != null) listener.openTaskUpdate(t);
         }
+
         @Override public void onChangeStatus(Task t, String newStatus) {
             t.setStatus(newStatus);
             vm.updateTask(t, new TaskViewModel.VoidResult() {
                 @Override public void ok() { }
-                @Override public void error(Exception e) { /* toast/log if desired */ }
+                @Override public void error(Exception e) { }
+            });
+        }
+
+        @Override public void onDelete(Task t) {
+            vm.deleteTask(t.getId(), new TaskViewModel.VoidResult() {
+                @Override public void ok() { }
+                @Override public void error(Exception e) { }
             });
         }
     });
 
     private final Calendar selected = Calendar.getInstance();
     private final SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (getParentFragment() instanceof TaskActionListener) {
+            listener = (TaskActionListener) getParentFragment();
+        }
+    }
 
     @Override public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle b) {
         binding = FragmentTasksCalendarBinding.inflate(inflater, container, false);
@@ -63,7 +85,7 @@ public class TasksCalendarFragment extends Fragment {
         binding.tvPicked.setText(fmt.format(selected.getTime()));
         binding.btnPickDate.setOnClickListener(view -> openDatePicker());
 
-        vm.getTasks().observe(getViewLifecycleOwner(), all -> applyForSelectedDay(all));
+        vm.getTasks().observe(getViewLifecycleOwner(), this::applyForSelectedDay);
     }
 
     private void openDatePicker() {
@@ -80,7 +102,6 @@ public class TasksCalendarFragment extends Fragment {
     }
 
     private void applyForSelectedDay(List<Task> all) {
-        // day window
         Calendar start = (Calendar) selected.clone(); zeroTime(start);
         Calendar end = (Calendar) start.clone(); end.add(Calendar.DAY_OF_YEAR, 1);
 
@@ -88,26 +109,30 @@ public class TasksCalendarFragment extends Fragment {
         long startMs = start.getTimeInMillis();
         long endMs = end.getTimeInMillis();
         for (Task t : all) {
-            // rules:
-            // ONE_TIME: show if t.startDateUtc is that day
-            // REPEATING: show if start<=day<=end (if endDateUtc!=null) and matches unit/interval — for now we show if day>=start and (end==null || day<=end)
             if ("ONE_TIME".equals(t.getFrequency())) {
-                if (t.getStartDateUtc() >= startMs && t.getStartDateUtc() < endMs) day.add(t);
+                if (t.getStartDateUtc() >= startMs && t.getStartDateUtc() < endMs) {
+                    day.add(t);
+                }
             } else {
-                if (t.getStartDateUtc() <= startMs && (t.getEndDateUtc()==null || t.getEndDateUtc() >= startMs)) {
-                    // OPTIONAL: compute exact recurrence hit; simple version shows all actives in range
+                if (t.getStartDateUtc() <= startMs &&
+                        (t.getEndDateUtc() == null || t.getEndDateUtc() >= startMs)) {
                     day.add(t);
                 }
             }
         }
-        // sort by time-of-day
         Collections.sort(day, Comparator.comparingInt(Task::getTimeOfDayMin));
         adapter.submitList(day);
     }
 
     private static void zeroTime(Calendar c) {
-        c.set(Calendar.HOUR_OF_DAY, 0); c.set(Calendar.MINUTE, 0); c.set(Calendar.SECOND, 0); c.set(Calendar.MILLISECOND, 0);
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
     }
 
-    @Override public void onDestroyView() { super.onDestroyView(); binding = null; }
+    @Override public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
 }

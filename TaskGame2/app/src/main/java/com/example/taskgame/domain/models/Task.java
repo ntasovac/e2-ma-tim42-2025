@@ -2,8 +2,10 @@ package com.example.taskgame.domain.models;
 
 import com.google.firebase.firestore.IgnoreExtraProperties;
 
+import java.io.Serializable;
+
 @IgnoreExtraProperties
-public class Task {
+public class Task implements Serializable {
     // Firestore-friendly POJO (no-arg ctor + getters/setters)
     private String id;
 

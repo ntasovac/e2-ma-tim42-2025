@@ -24,6 +24,8 @@ public class TaskRowAdapter extends ListAdapter<Task, TaskRowAdapter.VH> {
     public interface Listener {
         void onTaskClicked(Task t);
         void onChangeStatus(Task t, String newStatus);
+
+        void onDelete(Task t);
     }
 
     private final Listener listener;
@@ -74,6 +76,16 @@ public class TaskRowAdapter extends ListAdapter<Task, TaskRowAdapter.VH> {
             else if (id == R.id.action_done) s = "DONE";
             else if (id == R.id.action_cancelled) s = "CANCELLED";
             else if (id == R.id.action_paused) s = "PAUSED";
+            else if (id == R.id.action_delete) {
+                // 🔹 Special case: delete task entirely
+                if (listener != null) listener.onDelete(t);
+                return true;
+            }
+            else if (id == R.id.action_update) {
+                // 🔹 Special case: delete task entirely
+                if (listener != null) listener.onTaskClicked(t); // 🔹 reuse click for edit
+                return true;
+            }
             if (s != null && listener != null) listener.onChangeStatus(t, s);
             return true;
         });

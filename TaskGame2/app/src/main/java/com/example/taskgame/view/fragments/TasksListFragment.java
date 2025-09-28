@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.example.taskgame.R;
 import com.example.taskgame.databinding.FragmentTasksListBinding;
 import com.example.taskgame.domain.models.Task;
 import com.example.taskgame.view.adapters.TaskRowAdapter;
@@ -27,10 +28,26 @@ public class TasksListFragment extends Fragment {
     private FragmentTasksListBinding binding;
     private TaskViewModel vm;
     private final TaskRowAdapter adapter = new TaskRowAdapter(new TaskRowAdapter.Listener() {
-        @Override public void onTaskClicked(Task t) { /* TODO: open details */ }
+        @Override
+        public void onTaskClicked(Task t) {
+            Fragment fragment = TaskUpdateFragment.newInstance(t);
+
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.viewPager, fragment) // 👈 same container you used for create
+                    .addToBackStack(null)
+                    .commit();
+        }
         @Override public void onChangeStatus(Task t, String s) {
             t.setStatus(s);
             vm.updateTask(t, new TaskViewModel.VoidResult() { @Override public void ok() { } @Override public void error(Exception e) { }});
+        }
+
+        @Override public void onDelete(Task t) {
+            vm.deleteTask(t.getId(), new TaskViewModel.VoidResult() {
+                @Override public void ok() { }
+                @Override public void error(Exception e) { }
+            });
         }
     });
 

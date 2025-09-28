@@ -13,9 +13,10 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 import com.example.taskgame.R;
 import com.example.taskgame.databinding.FragmentTasksOverviewBinding;
+import com.example.taskgame.domain.models.Task;
 import com.google.android.material.tabs.TabLayoutMediator;
 
-public class TasksOverviewFragment extends Fragment {
+public class TasksOverviewFragment extends Fragment implements TasksCalendarFragment.TaskActionListener{
 
     private FragmentTasksOverviewBinding binding;
 
@@ -23,6 +24,30 @@ public class TasksOverviewFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentTasksOverviewBinding.inflate(inflater, container, false);
         return binding.getRoot();
+    }
+
+    @Override
+    public void openTaskUpdate(Task task) {
+        Bundle args = new Bundle();
+        args.putSerializable("task", task);
+
+        TaskUpdateFragment fragment = new TaskUpdateFragment();
+        fragment.setArguments(args);
+
+        // 🔹 Hide ViewPager + Tabs + FAB
+        binding.viewPager.setVisibility(View.GONE);
+        binding.tabLayout.setVisibility(View.GONE);
+        binding.fabCreate.setVisibility(View.GONE);
+
+        // 🔹 Show fragment container
+        requireActivity().findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
+
+        // 🔹 Replace fragment
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     @Override

@@ -28,7 +28,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-public class TaskFragment extends Fragment {
+public class TaskUpdateFragment extends Fragment {
 
     private FragmentTaskCreateBinding binding;
     private TaskViewModel taskVm;
@@ -57,7 +57,16 @@ public class TaskFragment extends Fragment {
 
     private final SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 
-    public static TaskFragment newInstance() { return new TaskFragment(); }
+    // Task being edited
+    private Task editingTask;
+
+    public static TaskUpdateFragment newInstance(Task task) {
+        TaskUpdateFragment f = new TaskUpdateFragment();
+        Bundle args = new Bundle();
+        args.putSerializable("task", task); // Task must implement Serializable or Parcelable
+        f.setArguments(args);
+        return f;
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -72,7 +81,12 @@ public class TaskFragment extends Fragment {
         taskVm = new ViewModelProvider(this).get(TaskViewModel.class);
         catVm  = new ViewModelProvider(this).get(CategoryViewModel.class);
 
-        // --- Category dropdown from Firestore ---
+        // load Task from args
+        if (getArguments() != null) {
+            editingTask = (Task) getArguments().getSerializable("task");
+        }
+
+        // --- Category dropdown ---
         ArrayAdapter<String> catAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, new ArrayList<>());
         binding.actCategory.setAdapter(catAdapter);
 
@@ -91,35 +105,79 @@ public class TaskFragment extends Fragment {
 
         // --- Frequency / unit ---
         binding.actFrequency.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, frequencyItems));
-        binding.actFrequency.setText(frequencyItems[0], false);
-        toggleRepeatingViews(false);
-        binding.actFrequency.setOnItemClickListener((p, vv, pos, i) -> toggleRepeatingViews("REPEATING".equals(frequencyItems[pos])));
-
         binding.actUnit.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, unitItems));
 
-        // --- Difficulty / Importance ---
+        // difficulty & importance
         binding.actDifficulty.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, difficultyLabels));
-        binding.actDifficulty.setText(difficultyLabels[0], false);
-        binding.actDifficulty.setOnItemClickListener((p1, v1, pos, i) -> { chosenDifficultyXp = difficultyXp[pos]; updateTotalXp(); });
-
         binding.actImportance.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, importanceLabels));
-        binding.actImportance.setText(importanceLabels[0], false);
+
+        // listeners
+        binding.actDifficulty.setOnItemClickListener((p1, v1, pos, i) -> { chosenDifficultyXp = difficultyXp[pos]; updateTotalXp(); });
         binding.actImportance.setOnItemClickListener((p2, v2, pos, i) -> { chosenImportanceXp = importanceXp[pos]; updateTotalXp(); });
 
-        updateTotalXp();
-
-        // --- Date pickers ---
+        // date/time pickers
         binding.tilStartDate.setEndIconOnClickListener(view -> showDatePicker(true));
         binding.etStartDate.setOnClickListener(view -> showDatePicker(true));
         binding.tilEndDate.setEndIconOnClickListener(view -> showDatePicker(false));
         binding.etEndDate.setOnClickListener(view -> showDatePicker(false));
-
-        // --- Time picker ---
         binding.tilTime.setEndIconOnClickListener(view -> showTimePicker());
         binding.etTime.setOnClickListener(view -> showTimePicker());
 
-        // --- Save ---
-        binding.btnSave.setOnClickListener(view -> onSave());
+        // prefill
+        if (editingTask != null) fillForm(editingTask);
+
+        // save/update
+        binding.btnSave.setText("Update Task");
+        binding.btnSave.setOnClickListener(view -> onUpdate());
+    }
+
+    private void fillForm(Task t) {
+        binding.etName.setText(t.getName());
+        binding.etDesc.setText(t.getDescription());
+
+        startDateUtc = t.getStartDateUtc();
+        endDateUtc = t.getEndDateUtc();
+        minutesOfDay = t.getTimeOfDayMin();
+
+        if (startDateUtc != null) binding.etStartDate.setText(dateFmt.format(startDateUtc));
+        if (endDateUtc != null) binding.etEndDate.setText(dateFmt.format(endDateUtc));
+        if (minutesOfDay != null) {
+            int h = minutesOfDay / 60, m = minutesOfDay % 60;
+            binding.etTime.setText(String.format(Locale.getDefault(), "%02d:%02d", h, m));
+        }
+
+        binding.actFrequency.setText(t.getFrequency(), false);
+        toggleRepeatingViews("REPEATING".equals(t.getFrequency()));
+        if (t.getInterval() != null) binding.etInterval.setText(String.valueOf(t.getInterval()));
+        if (t.getUnit() != null) binding.actUnit.setText(t.getUnit(), false);
+
+
+        binding.actCategory.setText(t.getCategoryName(), false);
+
+        // Difficulty
+        for (int i = 0; i < difficultyXp.length; i++) {
+            if (difficultyXp[i] == t.getDifficultyXp()) {
+                chosenDifficultyXp = difficultyXp[i];
+                binding.actDifficulty.setText(difficultyLabels[i], false); // 👈 show label
+                break;
+            }
+        }
+
+        // Importance
+        for (int i = 0; i < importanceXp.length; i++) {
+            if (importanceXp[i] == t.getImportanceXp()) {
+                chosenImportanceXp = importanceXp[i];
+                binding.actImportance.setText(importanceLabels[i], false); // 👈 show label
+                break;
+            }
+        }
+
+        // difficulty
+        chosenDifficultyXp = t.getDifficultyXp();
+        chosenImportanceXp = t.getImportanceXp();
+        updateTotalXp();
+
+
     }
 
     private void toggleRepeatingViews(boolean repeating) {
@@ -170,69 +228,59 @@ public class TaskFragment extends Fragment {
         binding.tvTotalXp.setText("Total XP: " + (chosenDifficultyXp + chosenImportanceXp));
     }
 
-    private void onSave() {
+    private void onUpdate() {
         String name = text(binding.etName);
-        if (TextUtils.isEmpty(name)) { toast("Name is required"); return; }
-        if (selectedCategory == null) { toast("Select category"); return; }
-        if (startDateUtc == null) { toast("Pick start date"); return; }
-        if (minutesOfDay == null) { toast("Pick time"); return; }
+        if (TextUtils.isEmpty(name)) return;
+        if (selectedCategory == null) return;
+        if (startDateUtc == null) return;
+        if (minutesOfDay == null) return;
 
-        String frequency = text(binding.actFrequency); // "ONE_TIME" or "REPEATING"
+        String frequency = text(binding.actFrequency);
         Integer interval = null;
         String unit = null;
 
         if ("REPEATING".equals(frequency)) {
             String iv = text(binding.etInterval);
-            if (TextUtils.isEmpty(iv)) { toast("Interval must be >= 1"); return; }
-            try {
-                int ivInt = Integer.parseInt(iv);
-                if (ivInt < 1) { toast("Interval must be >= 1"); return; }
-                interval = ivInt;
-            } catch (NumberFormatException ex) { toast("Interval must be a number"); return; }
+            if (!TextUtils.isEmpty(iv)) interval = Integer.parseInt(iv);
             unit = text(binding.actUnit);
-            if (TextUtils.isEmpty(unit)) { toast("Select unit"); return; }
         }
 
-        Task t = new Task();
-        t.setName(name);
-        t.setDescription(text(binding.etDesc));
-
-        t.setCategoryId(selectedCategory.getId());
-        t.setCategoryName(selectedCategory.getName());
-        t.setCategoryColor(selectedCategory.getColor());
-
-        t.setFrequency(frequency);
-        t.setInterval(interval);
-        t.setUnit(unit);
-        t.setStartDateUtc(startDateUtc);
-        t.setEndDateUtc(endDateUtc);
-        t.setTimeOfDayMin(minutesOfDay);
-
-        t.setDifficultyXp(chosenDifficultyXp);
-        t.setImportanceXp(chosenImportanceXp);
-        t.setTotalXp(chosenDifficultyXp + chosenImportanceXp);
-        t.setCreatedAtUtc(System.currentTimeMillis());
+        editingTask.setName(name);
+        editingTask.setDescription(text(binding.etDesc));
+        editingTask.setCategoryId(selectedCategory.getId());
+        editingTask.setCategoryName(selectedCategory.getName());
+        editingTask.setCategoryColor(selectedCategory.getColor());
+        editingTask.setFrequency(frequency);
+        editingTask.setInterval(interval);
+        editingTask.setUnit(unit);
+        editingTask.setStartDateUtc(startDateUtc);
+        editingTask.setEndDateUtc(endDateUtc);
+        editingTask.setTimeOfDayMin(minutesOfDay);
+        editingTask.setDifficultyXp(chosenDifficultyXp);
+        editingTask.setImportanceXp(chosenImportanceXp);
+        editingTask.setTotalXp(chosenDifficultyXp + chosenImportanceXp);
 
         binding.btnSave.setEnabled(false);
-        taskVm.createTask(t, new TaskViewModel.Result() {
-            @Override public void ok(String id) {
-                binding.btnSave.setEnabled(true);
+        taskVm.updateTask(editingTask, new TaskViewModel.VoidResult() {
+
+
+            @Override public void ok() {
+                //binding.btnSave.setEnabled(true);
                 toast("Task created");
                 requireActivity()
                         .getSupportFragmentManager()
                         .popBackStack();
                 // Optionally: clear form or navigate up
             }
-            @Override public void error(Exception e) {
-                binding.btnSave.setEnabled(true);
-                toast(e != null && e.getMessage() != null ? e.getMessage() : "Save failed");
-            }
+            @Override public void error(Exception e) { binding.btnSave.setEnabled(true); }
         });
     }
 
+    private void toast(String msg) { Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show(); }
+
+
     private String text(CharSequence cs) { return cs == null ? "" : cs.toString().trim(); }
     private String text(android.widget.TextView tv) { return text(tv.getText()); }
-    private void toast(String msg) { Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show(); }
 
     @Override public void onDestroyView() {
         super.onDestroyView();
