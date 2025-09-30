@@ -66,6 +66,10 @@ public class TaskRowAdapter extends ListAdapter<Task, TaskRowAdapter.VH> {
     }
 
     private void showMenu(View anchor, Task t) {
+        if ("DONE".equals(t.getStatus()) || "CANCELLED".equals(t.getStatus())) {
+            return; // do nothing
+        }
+
         PopupMenu pm = new PopupMenu(anchor.getContext(), anchor);
         MenuInflater inf = pm.getMenuInflater();
         inf.inflate(R.menu.menu_task_row, pm.getMenu());

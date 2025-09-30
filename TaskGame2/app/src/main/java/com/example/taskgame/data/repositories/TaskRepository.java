@@ -53,6 +53,37 @@ public class TaskRepository {
                 });
     }
 
+    /* ---------- Calculate success ratio ---------- */
+    public void calculateSuccessRatio(String userId, int level, final RatioCallback cb) {
+        col(userId)
+                .whereEqualTo("level", level)
+                .whereIn("status", List.of("DONE", "CANCELLED"))
+                .get()
+                .addOnCompleteListener(t -> {
+                    if (!t.isSuccessful()) {
+                        cb.onFailure(t.getException());
+                        return;
+                    }
+
+                    int doneCount = 1;
+                    int cancelledCount = 0;
+
+                    for (QueryDocumentSnapshot d : t.getResult()) {
+                        String status = d.getString("status");
+                        if ("DONE".equals(status)) {
+                            doneCount++;
+                        } else if ("CANCELLED".equals(status)) {
+                            cancelledCount++;
+                        }
+                    }
+
+                    int total = doneCount + cancelledCount;
+                    double ratio = (total > 0) ? (double) doneCount / total : 0.0;
+
+                    cb.onSuccess(ratio);
+                });
+    }
+
     /* ---------- Delete ---------- */
     public void delete(String userId, String taskId, final VoidCallback cb) {
         col(userId).document(taskId)
@@ -100,4 +131,9 @@ public class TaskRepository {
     public interface VoidCallback { void onSuccess(); void onFailure(Exception e); }
     public interface GetOneCallback { void onSuccess(Task task); void onFailure(Exception e); }
     public interface StreamCallback { void onChanged(List<Task> list); void onFailure(Exception e); }
+
+    public interface RatioCallback {
+        void onSuccess(double ratio);
+        void onFailure(Exception e);
+    }
 }

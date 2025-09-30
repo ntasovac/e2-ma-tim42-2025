@@ -12,8 +12,14 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.example.taskgame.data.repositories.BossRepository;
+import com.example.taskgame.data.repositories.TaskRepository;
+import com.example.taskgame.data.repositories.UserRepository;
 import com.example.taskgame.databinding.FragmentTasksCalendarBinding;
+import com.example.taskgame.domain.models.Boss;
+import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.domain.models.Task;
+import com.example.taskgame.domain.models.User;
 import com.example.taskgame.view.adapters.TaskRowAdapter;
 import com.example.taskgame.view.viewmodels.TaskViewModel;
 import com.google.android.material.datepicker.MaterialDatePicker;
@@ -36,6 +42,7 @@ public class TasksCalendarFragment extends Fragment {
 
     private FragmentTasksCalendarBinding binding;
     private TaskViewModel vm;
+
     private final TaskRowAdapter adapter = new TaskRowAdapter(new TaskRowAdapter.Listener() {
         @Override
         public void onTaskClicked(Task t) {
@@ -44,6 +51,82 @@ public class TasksCalendarFragment extends Fragment {
 
         @Override public void onChangeStatus(Task t, String newStatus) {
             t.setStatus(newStatus);
+
+            if(newStatus == "DONE"){
+                UserRepository userRepo = new UserRepository();
+                String loggedUserId = SessionManager.getInstance().getUserId();
+
+                userRepo.getUserById(loggedUserId, new UserRepository.GetUserCallback() {
+                    @Override
+                    public void onSuccess(User user) {
+                        if (user != null) {
+                            SessionManager.getInstance().setUserData(user);
+                            SessionManager.getInstance().increaseUserXP(t.getTotalXp());
+                            if(SessionManager.getInstance().CheckLvLUp()){
+                                SessionManager.getInstance().setUserXP(0);
+                                SessionManager.getInstance().increaseUserLevelandPP();
+
+                                BossRepository bossRepo = new BossRepository();
+                                Boss newBoss = new Boss(SessionManager.getInstance().getUserId(), SessionManager.getInstance().getUserLevel());
+
+
+                                vm.calculateSuccessRatio(new TaskViewModel.RatioResult() {
+                                    @Override
+                                    public void ok(double ratio) {
+                                        System.out.println("✅ Success ratio: " + ratio);
+                                        newBoss.setAttackChance(ratio);
+
+                                        // ⬇️ Boss se sada kreira tek kada imamo ratio
+                                        bossRepo.create(newBoss, new BossRepository.CreateCallback() {
+                                            @Override
+                                            public void onSuccess(String id) {
+                                                System.out.println("✅ Boss created: " + newBoss.getName() +
+                                                        " with ratio: " + newBoss.getAttackChance());
+                                            }
+
+                                            @Override
+                                            public void onFailure(Exception e) {
+                                                System.err.println("❌ Failed to create boss: " + e.getMessage());
+                                            }
+                                        });
+                                    }
+
+                                    @Override
+                                    public void error(Exception e) {
+                                        System.err.println("❌ Failed to calculate success ratio: " + e.getMessage());
+                                    }
+                                });
+
+                            }
+                            // update user
+                            SessionManager session = SessionManager.getInstance();
+                            userRepo.updateUserFields(
+                                    session.getUserId(),
+                                    session.getUserLevel(),
+                                    session.getUserXP(),
+                                    session.getUserPP(),
+                                    new UserRepository.RegisterCallback() {
+                                        @Override
+                                        public void onSuccess() {
+                                            System.out.println("✅ User XP/PP/Level updated!");
+                                        }
+
+                                        @Override
+                                        public void onFailure(Exception e) {
+                                            System.err.println("❌ Failed to update user: " + e.getMessage());
+                                        }
+                                    }
+                            );
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+
+                    }
+                });
+            }
+
             vm.updateTask(t, new TaskViewModel.VoidResult() {
                 @Override public void ok() { }
                 @Override public void error(Exception e) { }
@@ -57,6 +140,8 @@ public class TasksCalendarFragment extends Fragment {
             });
         }
     });
+
+
 
     private final Calendar selected = Calendar.getInstance();
     private final SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
@@ -108,7 +193,13 @@ public class TasksCalendarFragment extends Fragment {
         List<Task> day = new ArrayList<>();
         long startMs = start.getTimeInMillis();
         long endMs = end.getTimeInMillis();
+
+        String userId = SessionManager.getInstance().getUserId();
+        long userLongId = Long.parseLong(userId);
         for (Task t : all) {
+            if(t.getUserId() != userLongId) {
+                continue;
+            }
             if ("ONE_TIME".equals(t.getFrequency())) {
                 if (t.getStartDateUtc() >= startMs && t.getStartDateUtc() < endMs) {
                     day.add(t);

@@ -30,4 +30,10 @@
         android:label="Prikaz zadataka"
         tools:layout="@layout/fragment_tasks_overview" />
 
+    <fragment
+        android:id="@+id/fragmentBossFight"
+        android:name="com.example.taskgame.view.fragments.BossFightFragment"
+        android:label="Boss Fight"
+        tools:layout="@layout/fragment_boss_fight" />
+
 </navigation>

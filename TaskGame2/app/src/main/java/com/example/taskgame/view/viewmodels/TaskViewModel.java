@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.taskgame.data.repositories.TaskRepository;
+import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.domain.models.Task;
 import com.google.firebase.firestore.ListenerRegistration;
 
@@ -97,6 +98,29 @@ public class TaskViewModel extends ViewModel {
         });
     }
 
+    /* ---------- Calculate Success Ratio ---------- */
+    public void calculateSuccessRatio(final RatioResult cb) {
+        String userId = SessionManager.getInstance().getUserId();
+        int level = SessionManager.getInstance().getUserLevel();
+
+        if (userId == null || userId.isEmpty()) {
+            if (cb != null) cb.error(new IllegalStateException("User ID not set"));
+            return;
+        }
+
+        repo.calculateSuccessRatio(userId, level, new TaskRepository.RatioCallback() {
+            @Override
+            public void onSuccess(double ratio) {
+                if (cb != null) cb.ok(ratio);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                if (cb != null) cb.error(e);
+            }
+        });
+    }
+
     /* ---------- Results ---------- */
     public interface Result { void ok(String id); void error(Exception e); }
     public interface VoidResult { void ok(); void error(Exception e); }
@@ -107,4 +131,11 @@ public class TaskViewModel extends ViewModel {
         super.onCleared();
         stopObserving();
     }
+
+    /* ---------- Results ---------- */
+    public interface RatioResult {
+        void ok(double ratio);
+        void error(Exception e);
+    }
+
 }

@@ -15,4 +15,8 @@
 
     <item android:id="@+id/fragmentTasksOverview" android:title="Prikaz zadataka"/>
 
+    <item
+        android:id="@+id/fragmentBossFight"
+        android:title="Boss Fight"/>
+
 </menu>

@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.taskgame.databinding.FragmentTaskCreateBinding;
 import com.example.taskgame.domain.models.Category;
+import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.domain.models.Task;
 import com.example.taskgame.view.viewmodels.CategoryViewModel;
 import com.example.taskgame.view.viewmodels.TaskViewModel;
@@ -194,6 +195,12 @@ public class TaskFragment extends Fragment {
         }
 
         Task t = new Task();
+        String userId = SessionManager.getInstance().getUserId();
+        long userLongId = Long.parseLong(userId);
+        int userLevel = SessionManager.getInstance().getUserLevel();
+        t.setUserId(userLongId);
+        t.setLevel(userLevel);
+
         t.setName(name);
         t.setDescription(text(binding.etDesc));
 

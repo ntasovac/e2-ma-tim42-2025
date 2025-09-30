@@ -15,6 +15,8 @@ public class Task implements Serializable {
     private String name;
     private String description;
 
+    private long userId;
+    private int Level;
     private long categoryId;
     private String categoryName;
     private int categoryColor;
@@ -39,6 +41,12 @@ public class Task implements Serializable {
     // getters/setters (generate or keep as below)
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+
+    public long getUserId() { return userId; }
+    public void setUserId(long userId) { this.userId = userId; }
+
+    public int getLevel() { return Level; }
+    public void setLevel(int level) { this.Level = level; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

@@ -126,6 +126,32 @@ public class TaskUpdateFragment extends Fragment {
         // prefill
         if (editingTask != null) fillForm(editingTask);
 
+        if ("DONE".equals(editingTask.getStatus()) || "CANCELLED".equals(editingTask.getStatus())) {
+            // Disable inputs
+            binding.etName.setEnabled(false);
+            binding.etDesc.setEnabled(false);
+            binding.actCategory.setEnabled(false);
+            binding.actCategory.setClickable(false);
+            binding.actFrequency.setEnabled(false);
+            binding.actFrequency.setClickable(false);
+            binding.etInterval.setEnabled(false);
+            binding.actUnit.setEnabled(false);
+            binding.actUnit.setClickable(false);
+            binding.etStartDate.setEnabled(false);
+            binding.etEndDate.setEnabled(false);
+            binding.etTime.setEnabled(false);
+            binding.actDifficulty.setEnabled(false);
+            binding.actDifficulty.setClickable(false);
+            binding.actImportance.setEnabled(false);
+            binding.actImportance.setClickable(false);
+
+            // Hide Update button
+            binding.btnSave.setVisibility(View.GONE);
+
+
+
+        }
+
         // save/update
         binding.btnSave.setText("Update Task");
         binding.btnSave.setOnClickListener(view -> onUpdate());
