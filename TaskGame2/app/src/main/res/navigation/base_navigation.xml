@@ -36,4 +36,11 @@
         android:label="Boss Fight"
         tools:layout="@layout/fragment_boss_fight" />
 
+    <!-- 🔹 New Alliance fragment -->
+    <fragment
+        android:id="@+id/fragmentAlliance"
+        android:name="com.example.taskgame.view.fragments.AllianceFragment"
+        android:label="Alliance"
+        tools:layout="@layout/fragment_alliance" />
+
 </navigation>

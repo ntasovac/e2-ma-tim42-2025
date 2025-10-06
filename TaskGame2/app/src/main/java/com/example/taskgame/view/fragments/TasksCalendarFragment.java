@@ -21,6 +21,7 @@ import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.domain.models.Task;
 import com.example.taskgame.domain.models.User;
 import com.example.taskgame.view.adapters.TaskRowAdapter;
+import com.example.taskgame.view.viewmodels.AllianceViewModel;
 import com.example.taskgame.view.viewmodels.TaskViewModel;
 import com.google.android.material.datepicker.MaterialDatePicker;
 
@@ -53,6 +54,7 @@ public class TasksCalendarFragment extends Fragment {
             t.setStatus(newStatus);
 
             if(newStatus == "DONE"){
+                specialMissionApplyTask(t);
                 UserRepository userRepo = new UserRepository();
                 String loggedUserId = SessionManager.getInstance().getUserId();
 
@@ -98,6 +100,8 @@ public class TasksCalendarFragment extends Fragment {
                                 });
 
                             }
+
+                            vm.resetBossesForNextFight();
                             // update user
                             SessionManager session = SessionManager.getInstance();
                             userRepo.updateUserFields(
@@ -172,6 +176,39 @@ public class TasksCalendarFragment extends Fragment {
 
         vm.getTasks().observe(getViewLifecycleOwner(), this::applyForSelectedDay);
     }
+
+    private void specialMissionApplyTask(Task t) {
+        AllianceViewModel allianceVM = new ViewModelProvider(requireActivity()).get(AllianceViewModel.class);
+        String userId = SessionManager.getInstance().getUserId();
+
+        allianceVM.loadAllianceByUser(userId);
+
+        allianceVM.getAlliance().observe(getViewLifecycleOwner(), alliance -> {
+            if (alliance == null) return;
+
+            // Once alliance is loaded, apply damage
+            int diffXp = t.getDifficultyXp();
+            int impXp = t.getImportanceXp();
+
+            boolean isNormalTask = diffXp == 1 || diffXp == 3 || impXp == 1 || impXp == 3;
+            boolean isEasyAndNormal = (diffXp == 3) && (impXp == 1);
+
+            System.out.println("✅ specialMissionApplyTask is Normal: " + isNormalTask);
+            System.out.println("✅ specialMissionApplyTask isEasyAndNormal: " + isEasyAndNormal);
+
+            if (isEasyAndNormal) {
+                allianceVM.applySpecialMissionAction(userId, "task", "easy_and_normal");
+            } else if (isNormalTask) {
+                allianceVM.applySpecialMissionAction(userId, "task", "normal_task");
+            } else {
+                allianceVM.applySpecialMissionAction(userId, "otherTask", null);
+            }
+
+            // Remove observer so it doesn't re-trigger unnecessarily
+            allianceVM.getAlliance().removeObservers(getViewLifecycleOwner());
+        });
+    }
+
 
     private void openDatePicker() {
         MaterialDatePicker<Long> dp = MaterialDatePicker.Builder.datePicker()

@@ -13,6 +13,9 @@ public class SessionManager {
 
     private int Coins;
 
+    private int equipmentPP;
+    private double bonusCoinPercent;
+
     private SessionManager() {}
 
     public static SessionManager getInstance() {
@@ -56,12 +59,21 @@ public class SessionManager {
         return XP;
     }
 
+    public double getBonusCoinPercent() { return bonusCoinPercent; }
+    public void setBonusCoinPercent(double bonusCoinPercent) { this.bonusCoinPercent = bonusCoinPercent; }
+
     public void setUserPP(int pp) {
         this.PP = pp;
     }
 
     public int getUserPP() {
         return PP;
+    }
+    public int getUserEquipmentPP() {
+        return equipmentPP;
+    }
+    public void setUserEquipmentPP(int eqPP) {
+         this.equipmentPP = eqPP;
     }
 
     public void setUserTotalPP(int pp) {
@@ -82,8 +94,11 @@ public class SessionManager {
             this.PP = 40;
         } else {
             this.userLevel += 1;
-            this.PP *= 7/4;
+
+            this.PP = (int) (40.0 * Math.pow(7.0 / 4.0, userLevel - 2));
         }
+        System.out.println("🔄 Increase Level user " + userId + " -> Level: " + userLevel + ", PP: " + PP);
+
     }
 
     public void setUserData(User user){
@@ -97,7 +112,7 @@ public class SessionManager {
         int xp = this.getUserXP();
         int level = this.getUserLevel();
         double totalXPforLevel = 200 * Math.pow(5.0 / 2.0, level - 1);
-        return true;
-        //return xp > totalXPforLevel;
+        //return true;
+        return xp > totalXPforLevel;
     }
 }

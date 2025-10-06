@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.taskgame.data.repositories.BossRepository;
 import com.example.taskgame.data.repositories.TaskRepository;
 import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.domain.models.Task;
@@ -117,6 +118,23 @@ public class TaskViewModel extends ViewModel {
             @Override
             public void onFailure(Exception e) {
                 if (cb != null) cb.error(e);
+            }
+        });
+    }
+
+    public void resetBossesForNextFight() {
+        String userId = SessionManager.getInstance().getUserId();
+
+        BossRepository bossRepository = new BossRepository();
+        bossRepository.resetAllPendingBossesForNextFight(userId, new BossRepository.VoidCallback() {
+            @Override
+            public void onSuccess() {
+                System.out.println("✅ All pending bosses reset to ACTIVE with 5 attacks");
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                System.err.println("❌ Failed to reset bosses: " + e.getMessage());
             }
         });
     }

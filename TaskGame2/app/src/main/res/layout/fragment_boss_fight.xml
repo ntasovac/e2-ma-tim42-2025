@@ -20,8 +20,11 @@
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="24dp"
-        android:progressTint="@android:color/holo_red_dark"
+        android:progress="100"
+        android:max="100"
+        android:progressDrawable="@drawable/hp_progress_bar"
         android:layout_marginBottom="8dp" />
+
 
     <TextView
         android:id="@+id/tvHp"
@@ -44,9 +47,46 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <!-- Player PP info -->
+    <TextView
+        android:id="@+id/tvBasePP"
+        android:text="Base PP: 0"
+        android:layout_marginBottom="4dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/tvEquipmentPP"
+        android:text="Equipment PP: 0"
+        android:layout_marginBottom="4dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/tvTotalPP"
+        android:text="Total PP: 0"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
     <Button
         android:id="@+id/btnAttack"
         android:text="Attack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+
+    <!-- 🔹 New Button for Equipment -->
+    <Button
+        android:id="@+id/btnUseEquipment"
+        android:text="Use Equipment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/btnViewRewards"
+        android:text="View Possible Rewards"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
 </LinearLayout>

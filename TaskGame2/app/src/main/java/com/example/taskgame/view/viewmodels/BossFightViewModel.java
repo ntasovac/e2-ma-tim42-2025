@@ -24,6 +24,26 @@ public class BossFightViewModel extends ViewModel {
 
     public void loadBoss(String userId, int userLevel) {
         int bossIndex = userLevel - 1;
+
+        bossRepository.getFirstActiveBoss(SessionManager.getInstance().getUserId(),
+                new BossRepository.GetOneCallback() {
+                    @Override
+                    public void onSuccess(Boss boss) {
+                        if (boss != null) {
+                            bossLiveData.setValue(boss);
+                            System.out.println("✅ First active boss: " + boss.getName() +
+                                    " (Level " + boss.getLevel() + "), user id: " + boss.getUserId());
+                        } else {
+                            System.out.println("⚠️ No active bosses found");
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        System.err.println("❌ Failed to fetch boss: " + e.getMessage());
+                    }
+                });
+        /*
         bossRepository.getByIndex(userId, bossIndex, new BossRepository.GetOneCallback() {
             @Override
             public void onSuccess(Boss boss) {
@@ -46,7 +66,13 @@ public class BossFightViewModel extends ViewModel {
 
             @Override
             public void onFailure(Exception e) { }
-        });
+        });*/
+    }
+
+    public boolean isFightOver() {
+        Boss boss = bossLiveData.getValue();
+        if (boss == null) return true; // safe default
+        return boss.isDefeated() || boss.getAvailableAttacks() <= 0;
     }
 
     public boolean attackBoss(int damage) {
@@ -68,4 +94,31 @@ public class BossFightViewModel extends ViewModel {
         return hit;
     }
 
+
+
+    public void setBossPending() {
+        Boss boss = bossLiveData.getValue();
+        if (boss == null) {
+            System.err.println("⚠️ No boss available in LiveData");
+            return;
+        }
+
+        String userId = SessionManager.getInstance().getUserId();
+        int bossIndex = boss.getBossIndex();
+
+        bossRepository.setBossPending(userId, bossIndex, new BossRepository.VoidCallback() {
+            @Override
+            public void onSuccess() {
+                System.out.println("✅ Boss " + bossIndex + " set to PENDING");
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                System.err.println("❌ Failed to set boss pending: " + e.getMessage());
+            }
+        });
+    }
+
 }
+
+

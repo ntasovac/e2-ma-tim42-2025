@@ -4,7 +4,12 @@ import androidx.annotation.NonNull;
 import com.example.taskgame.domain.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.DocumentSnapshot;
+import java.util.HashMap;
+import java.util.Map;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,6 +64,7 @@ public class UserRepository {
         updates.put("Level", level);
         updates.put("XP", xp);
         updates.put("PP", pp);
+        System.out.println("🔄 Updating user " + userId + " -> Level: " + level + ", XP: " + xp + ", PP: " + pp);
 
         db.collection("users")
                 .document(userId)
@@ -71,6 +77,54 @@ public class UserRepository {
                     }
                 });
     }
+
+    /** 🔹 Increment user's coins by a certain amount */
+    public void incrementCoins(String userId, int amount, final RegisterCallback cb) {
+        if (userId == null || userId.isEmpty()) {
+            cb.onFailure(new IllegalArgumentException("User ID is missing"));
+            return;
+        }
+
+        db.collection("users").document(userId)
+                .update("coins", FieldValue.increment(amount))
+                .addOnSuccessListener(aVoid -> {
+                    System.out.println("✅ User " + userId + " coins increased by " + amount);
+                    cb.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    System.err.println("❌ Failed to increase coins for user " + userId + ": " + e.getMessage());
+                    cb.onFailure(e);
+                });
+    }
+
+
+    public void giveBossRewards(String userId, int bonusCoins) {
+        db.collection("users").document(userId).get().addOnCompleteListener(task -> {
+            if (!task.isSuccessful() || task.getResult() == null || !task.getResult().exists()) {
+                System.err.println("❌ User not found or fetch failed");
+                return;
+            }
+
+            DocumentSnapshot snapshot = task.getResult();
+            Long currentCoins = snapshot.getLong("coins"); // Firestore stores numbers as Long
+            if (currentCoins == null) currentCoins = 0L;
+
+            long newCoins = currentCoins + bonusCoins;
+
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("coins", newCoins);
+
+            db.collection("users").document(userId).update(updates)
+                    .addOnCompleteListener(updateTask -> {
+                        if (updateTask.isSuccessful()) {
+                            System.out.println("✅ Coins updated to: " + newCoins);
+                        } else {
+                            System.err.println("❌ Failed to update coins: " + updateTask.getException());
+                        }
+                    });
+        });
+    }
+
 
 
     public interface RegisterCallback {

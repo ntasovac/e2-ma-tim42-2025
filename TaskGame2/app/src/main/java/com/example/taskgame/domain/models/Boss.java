@@ -8,6 +8,8 @@ public class Boss {
     private int level;       // nivo korisnika
     private int bossIndex;   // koji je ovo boss (1, 2, 3...)
 
+    private boolean rewardGiven;
+
     private double totalHP;
     private double hp;
     private int coins;
@@ -20,6 +22,7 @@ public class Boss {
     public Boss() {}
 
     public Boss(String userId, int userLevel) {
+        this.rewardGiven = false;
         this.userId = userId;
         this.level = userLevel;
         this.bossIndex = userLevel - 1;  // prvi boss se pojavljuje na levelu 2
@@ -31,7 +34,7 @@ public class Boss {
             this.totalHP = 200;
         } else {
             this.hp = 200 * Math.pow(5.0 / 2.0, bossIndex - 1);
-            this.totalHP = this.hp;
+            this.totalHP = 200 * Math.pow(5.0 / 2.0, bossIndex - 1);
         }
 
         // Coins formula
@@ -55,6 +58,15 @@ public class Boss {
     public int getBossIndex() { return bossIndex; }
     public double getHp() { return hp; }
     public double getTotalHp() { return totalHP; }
+
+    public void setTotalHp(double totalHp) {
+        if (totalHp > 0) {
+            this.totalHP = totalHp;
+        }
+    }
+
+    public boolean isRewardGiven() { return rewardGiven; }
+    public void setRewardGiven(boolean rewardGiven) { this.rewardGiven = rewardGiven; }
     public int getCoins() { return coins; }
     public String getStatus() { return status; }
     public int getAvailableAttacks() { return availableAttacks; }
@@ -72,6 +84,56 @@ public class Boss {
     public double getAttackChance() { return attackChance; }
     public void setAttackChance(double attackChance) { this.attackChance = attackChance; }
 
+    public int calculateFullReward() {
+        return this.coins;
+    }
+
+    public int calculateHalfReward() {
+        return (int) Math.round(this.coins * 0.5);
+    }
+
+    public int calculateNoReward() {
+        return 0;
+    }
+
+    public int getRewardAfterFight() {
+        if (isDefeated()) {
+            return calculateFullReward();
+        } else {
+            double hpLostPercent = (this.totalHP - this.hp) / this.totalHP;
+            if (hpLostPercent >= 0.5) {
+                return calculateHalfReward();
+            } else {
+                return calculateNoReward();
+            }
+        }
+    }
+
+    // 🔹 Equipment reward logic
+    public boolean rollForEquipmentDrop() {
+        this.rewardGiven = true;
+        double chance = isDefeated() ? 1.20 : 0.10; // 20% or 10%
+        return Math.random() < chance;
+    }
+
+    public String rollEquipmentType() {
+        return Math.random() < 0.95 ? "CLOTHING" : "WEAPON";
+    }
+
+
+    public String getRandomEquipmentId() {
+        // Clothing vs Weapon
+        boolean isClothing = Math.random() < 0.95; // 95% chance for clothing
+
+        if (isClothing) {
+            // 50/50 between Golden Crown and Shadow Cloak
+            return Math.random() < 0.5 ? "eq_golden_crown" : "eq_shadow_cloak";
+        } else {
+            // 50/50 between Sword of Flames and War Hammer
+            return Math.random() < 0.5 ? "eq_sword_flames" : "eq_war_hammer";
+        }
+    }
+
     // Utility: oduzimanje HP-a
     public boolean takeDamage(double damage) {
         if (availableAttacks <= 0 || "DEFEATED".equals(this.status)) {
@@ -82,7 +144,11 @@ public class Boss {
 
         double roll = new java.util.Random().nextDouble();
 
-        if (roll <= this.attackChance) {
+        // just for testing to defeat boss
+        //damage = this.hp + 1;
+
+
+        if (roll <= this.attackChance || true) {
             // ✅ pogodak
             this.hp = Math.max(0, this.hp - damage);
             if (this.hp <= 0) {

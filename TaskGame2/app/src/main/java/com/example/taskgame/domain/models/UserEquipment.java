@@ -19,6 +19,9 @@ public class UserEquipment {
         this.acquiredAt = System.currentTimeMillis();
     }
 
+
+
+
     // Getters
     public String getUserId() { return userId; }
     public String getEquipmentId() { return equipmentId; }

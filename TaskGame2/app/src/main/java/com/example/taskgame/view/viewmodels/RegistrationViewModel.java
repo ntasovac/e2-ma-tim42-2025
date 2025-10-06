@@ -4,13 +4,18 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.taskgame.data.repositories.AllianceRepository;
 import com.example.taskgame.data.repositories.SpecialEquipmentRepository;
 import com.example.taskgame.data.repositories.UserEquipmentRepository;
 import com.example.taskgame.data.repositories.UserRepository;
+import com.example.taskgame.domain.models.Alliance;
 import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.domain.models.SpecialEquipment;
 import com.example.taskgame.domain.models.User;
 import com.example.taskgame.domain.models.UserEquipment;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RegistrationViewModel extends ViewModel {
 
@@ -39,7 +44,8 @@ public class RegistrationViewModel extends ViewModel {
 
     public void login(int userNumber) {
         //CreateTestEquipment();
-        GiveUserEqipment();
+        //GiveUserEqipment();
+        //createAlliance();
         String userId = String.valueOf(userNumber);
 
         if(userNumber == 1){
@@ -111,6 +117,38 @@ public class RegistrationViewModel extends ViewModel {
     }
 
 
+    public void createAlliance(){
+        AllianceRepository allianceRepo = new AllianceRepository();
+
+// Define participants
+        List<String> participants = new ArrayList<>();
+        participants.add("1759088611"); // leader
+        participants.add("1759088864");
+        participants.add("1759089126");
+
+// Create alliance object
+        Alliance alliance = new Alliance();
+        alliance.setLeaderId("1759088611");  // leader
+        alliance.setParticipantIds(participants);
+        alliance.setSpecialMissionActive(false); // default no mission
+        alliance.setSpecialBossId(null);        // no boss yet
+
+// Save to Firestore
+        allianceRepo.create(alliance, new AllianceRepository.CreateCallback() {
+            @Override
+            public void onSuccess(String id) {
+                System.out.println("✅ Alliance created with ID: " + id);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                System.err.println("❌ Failed to create alliance: " + e.getMessage());
+            }
+        });
+
+    }
+
+
     public void GiveUserEqipment(){
         UserEquipmentRepository repo = new UserEquipmentRepository();
         String userId = "1759088611";
@@ -142,72 +180,95 @@ public class RegistrationViewModel extends ViewModel {
     public void CreateTestEquipment(){
         SpecialEquipmentRepository repo = new SpecialEquipmentRepository();
 
-// Sword of Flames
-        SpecialEquipment sword = new SpecialEquipment(
-                null,                                // Firestore id
-                "Sword of Flames",                   // name
-                "weapon",                            // type
-                20,                                  // bonusPP
-                0,                                   // bonusCoinPercent
-                "A blazing sword that increases your power by 20 PP." // description
+// 1. Sword of Flames
+        SpecialEquipment swordOfFlames = new SpecialEquipment(
+                "eq_sword_flames",
+                "Sword of Flames",
+                "WEAPON",
+                15,
+                0.10,
+                "A blazing sword that increases your power and rewards."
         );
 
-// Golden Armor
-        SpecialEquipment armor = new SpecialEquipment(
-                null,
-                "Golden Armor",
-                "armor",
-                10,
-                10,
-                "Heavy golden armor that grants +10 PP and +10% coins from rewards."
+        repo.create(swordOfFlames, new SpecialEquipmentRepository.CreateCallback() {
+            @Override
+            public void onSuccess(String id) {
+                System.out.println("✅ Sword of Flames created with ID: " + id);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                System.err.println("❌ Failed to create Sword of Flames: " + e.getMessage());
+            }
+        });
+
+// 2. Shadow Cloak
+        SpecialEquipment shadowCloak = new SpecialEquipment(
+                "eq_shadow_cloak",
+                "Shadow Cloak",
+                "CLOTHING",
+                5,
+                0.20,
+                "A cloak that grants stealth and more loot."
         );
 
-// Lucky Amulet
-        SpecialEquipment amulet = new SpecialEquipment(
-                null,
-                "Lucky Amulet",
-                "accessory",
-                0,
+        repo.create(shadowCloak, new SpecialEquipmentRepository.CreateCallback() {
+            @Override
+            public void onSuccess(String id) {
+                System.out.println("✅ Shadow Cloak created with ID: " + id);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                System.err.println("❌ Failed to create Shadow Cloak: " + e.getMessage());
+            }
+        });
+
+// 3. War Hammer
+        SpecialEquipment warHammer = new SpecialEquipment(
+                "eq_war_hammer",
+                "War Hammer",
+                "WEAPON",
                 25,
-                "A mysterious charm that increases your coin gain by 25%."
+                0.05,
+                "A heavy hammer that deals massive blows."
         );
 
-// Save into Firestore
-        repo.create(sword, new SpecialEquipmentRepository.CreateCallback() {
+        repo.create(warHammer, new SpecialEquipmentRepository.CreateCallback() {
             @Override
             public void onSuccess(String id) {
-                System.out.println("✅ Sword saved with id: " + id);
+                System.out.println("✅ War Hammer created with ID: " + id);
             }
 
             @Override
             public void onFailure(Exception e) {
-                System.err.println("❌ Failed to save Sword: " + e.getMessage());
+                System.err.println("❌ Failed to create War Hammer: " + e.getMessage());
             }
         });
 
-        repo.create(armor, new SpecialEquipmentRepository.CreateCallback() {
+// 4. Golden Crown
+        SpecialEquipment goldenCrown = new SpecialEquipment(
+                "eq_golden_crown",
+                "Golden Crown",
+                "CLOTHING",
+                0,
+                0.50,
+                "A crown symbolizing wealth, greatly boosts coin rewards."
+        );
+
+        repo.create(goldenCrown, new SpecialEquipmentRepository.CreateCallback() {
             @Override
             public void onSuccess(String id) {
-                System.out.println("✅ Armor saved with id: " + id);
+                System.out.println("✅ Golden Crown created with ID: " + id);
             }
 
             @Override
             public void onFailure(Exception e) {
-                System.err.println("❌ Failed to save Armor: " + e.getMessage());
+                System.err.println("❌ Failed to create Golden Crown: " + e.getMessage());
             }
         });
 
-        repo.create(amulet, new SpecialEquipmentRepository.CreateCallback() {
-            @Override
-            public void onSuccess(String id) {
-                System.out.println("✅ Amulet saved with id: " + id);
-            }
 
-            @Override
-            public void onFailure(Exception e) {
-                System.err.println("❌ Failed to save Amulet: " + e.getMessage());
-            }
-        });
 
     }
 }

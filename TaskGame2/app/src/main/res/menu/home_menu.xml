@@ -19,4 +19,8 @@
         android:id="@+id/fragmentBossFight"
         android:title="Boss Fight"/>
 
+    <item
+        android:id="@+id/fragmentAlliance"
+        android:title="Alliance" />
+
 </menu>
