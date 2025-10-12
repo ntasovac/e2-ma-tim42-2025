@@ -12,7 +12,7 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         BossRepository bossRepository = new BossRepository();
-        bossRepository.createBossIfNotExists();
+        //bossRepository.createBossIfNotExists();
         createNotificationChannel();
     }
     private void createNotificationChannel() {

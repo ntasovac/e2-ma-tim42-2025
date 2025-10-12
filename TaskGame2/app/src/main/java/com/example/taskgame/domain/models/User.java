@@ -3,7 +3,7 @@ package com.example.taskgame.domain.models;
 import android.os.Parcelable;
 import android.os.Parcel;
 
-public class User implements Parcelable {
+/*public class User implements Parcelable {
     private Long Id;
 
     private int PP;
@@ -158,9 +158,7 @@ public class User implements Parcelable {
         }
     };
 }
-
-/*
-package com.example.taskgame.domain.models;
+*/
 
 import android.os.Parcelable;
 import android.os.Parcel;
@@ -173,6 +171,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class User implements Parcelable {
+    private Long Id;
     private String Username;
     private String Email;
     private int Avatar;
@@ -217,6 +216,14 @@ public class User implements Parcelable {
         Username = in.readString();
         Email = in.readString();
         Avatar = in.readInt();
+    }
+
+    public Long getId() {
+        return Id;
+    }
+
+    public void setId(Long id) {
+        Id = id;
     }
 
     @PropertyName("username")
@@ -366,5 +373,3 @@ public class User implements Parcelable {
         }
     };
 }
-
- */

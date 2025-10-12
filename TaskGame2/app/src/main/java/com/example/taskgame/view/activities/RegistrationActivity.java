@@ -94,6 +94,7 @@ public class RegistrationActivity extends AppCompatActivity {
         });
 
         // 🔹 Log In button (direct user selection: 1, 2, or 3)
+        /*
         binding.loginButton.setOnClickListener(v -> {
             String input = binding.userNumberInput.getText().toString().trim();
 
@@ -116,7 +117,7 @@ public class RegistrationActivity extends AppCompatActivity {
             } catch (NumberFormatException e) {
                 Toast.makeText(this, "Invalid number format", Toast.LENGTH_SHORT).show();
             }
-        });
+        });*/
 
         viewModel.getMessage().observe(this, new Observer<String>() {
             @Override

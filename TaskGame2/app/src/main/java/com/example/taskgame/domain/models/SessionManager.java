@@ -104,8 +104,8 @@ public class SessionManager {
     public void setUserData(User user){
         this.userLevel = user.getLevel();
         this.userId = user.getId().toString();
-        this.XP = user.getXP();
-        this.PP = user.getPP();
+        this.XP = user.getExperience();
+        this.PP = user.getPowerPoints();
     }
 
     public boolean CheckLvLUp(){

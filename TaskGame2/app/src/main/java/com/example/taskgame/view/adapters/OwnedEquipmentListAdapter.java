@@ -174,13 +174,14 @@ public class OwnedEquipmentListAdapter extends RecyclerView.Adapter<OwnedEquipme
     }
 
     private void getUpgradeCost(Consumer<Integer> callback){
-        bossRepository.getBoss().observeForever(boss -> {
+        /*bossRepository.getBoss().observeForever(boss -> {
             if (boss != null) {
                 int cost = (int) Math.ceil(Math.pow(6.0 / 5.0, boss.getLevel() - 2) * 200);
                 cost = (int)Math.round(0.6 * cost);
                 callback.accept(cost);
             }
-        });
+        });*/
+        callback.accept(50);
     }
 
     static class EquipmentViewHolder extends RecyclerView.ViewHolder {

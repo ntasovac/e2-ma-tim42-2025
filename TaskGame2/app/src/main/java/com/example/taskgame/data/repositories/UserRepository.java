@@ -1,5 +1,47 @@
 package com.example.taskgame.data.repositories;
 
+import android.content.Context;
+import android.util.Log;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+
+import com.example.taskgame.R;
+import com.example.taskgame.domain.enums.EquipmentType;
+import com.example.taskgame.domain.enums.Title;
+import com.example.taskgame.domain.models.Boss;
+import com.example.taskgame.domain.models.Equipment;
+import com.example.taskgame.domain.models.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.messaging.FirebaseMessaging;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
 import androidx.annotation.NonNull;
 import com.example.taskgame.domain.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -16,25 +58,18 @@ import java.util.Map;
 
 public class UserRepository {
     private FirebaseFirestore db;
+    private final FirebaseAuth auth;
+    private final MutableLiveData<FirebaseUser> userLiveData;
+    private final MutableLiveData<String> errorLiveData;
 
     public UserRepository() {
+        auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-    }
-
-    public void registerUser(User user, final RegisterCallback callback) {
-        db.collection("users")
-                .document(String.valueOf(user.getId()))
-                .set(user)
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if(task.isSuccessful()) {
-                            callback.onSuccess();
-                        } else {
-                            callback.onFailure(task.getException());
-                        }
-                    }
-                });
+        userLiveData = new MutableLiveData<>();
+        errorLiveData = new MutableLiveData<>();
+        if (auth.getCurrentUser() != null) {
+            userLiveData.postValue(auth.getCurrentUser());
+        }
     }
 
     // 🔹 New function: get user by id
@@ -123,77 +158,6 @@ public class UserRepository {
                         }
                     });
         });
-    }
-
-
-
-    public interface RegisterCallback {
-        void onSuccess();
-        void onFailure(Exception e);
-    }
-}
-
-
-/*
-package com.example.taskgame.data.repositories;
-
-import android.content.Context;
-import android.util.Log;
-import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-
-import com.example.taskgame.R;
-import com.example.taskgame.domain.enums.EquipmentType;
-import com.example.taskgame.domain.enums.Title;
-import com.example.taskgame.domain.models.Boss;
-import com.example.taskgame.domain.models.Equipment;
-import com.example.taskgame.domain.models.User;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Tasks;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.EmailAuthProvider;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.messaging.FirebaseMessaging;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-
-public class UserRepository {
-    private final FirebaseAuth auth;
-    private final FirebaseFirestore db;
-    private final MutableLiveData<FirebaseUser> userLiveData;
-    private final MutableLiveData<String> errorLiveData;
-    private final BossRepository bossRepository;
-    public UserRepository() {
-        auth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
-        userLiveData = new MutableLiveData<>();
-        errorLiveData = new MutableLiveData<>();
-        if (auth.getCurrentUser() != null) {
-            userLiveData.postValue(auth.getCurrentUser());
-        }
-        bossRepository = new BossRepository();
     }
 
     public void registerUser(String email, String password, User user, RegisterCallback callback) {
@@ -617,7 +581,7 @@ public class UserRepository {
                     Equipment rewardEquipment;
 
                     long lastBossReward = (long) Math.ceil(
-                            Math.pow(6.0 / 5.0, boss.getCoinReward() - 2) * 200);
+                            Math.pow(6.0 / 5.0, /*boss.getCoinReward()*/100 - 2) * 200);
 
                     Random random = new Random();
                     int number = random.nextInt(100) + 1;
@@ -1277,4 +1241,3 @@ public class UserRepository {
     }
 }
 
- */

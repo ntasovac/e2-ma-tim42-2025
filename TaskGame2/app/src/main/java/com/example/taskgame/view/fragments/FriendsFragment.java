@@ -116,7 +116,7 @@ public class FriendsFragment extends Fragment {
                 }else{
                     viewModel.getAllianceByName(user.getAlliance())
                             .observe(getViewLifecycleOwner(), alliance -> {
-                                Log.d("isMissionActive", String.valueOf(alliance.isMissionActive()));
+                                Log.d("isMissionActive", String.valueOf(alliance.isSpecialMissionActive()));
                                 binding.allianceName.setText(user.getAlliance());
                                 binding.allianceName.setVisibility(View.VISIBLE);
                                 binding.allianceCard.setVisibility(View.VISIBLE);
@@ -129,7 +129,7 @@ public class FriendsFragment extends Fragment {
                                 if (user.isAllianceOwner()) {
                                     binding.deleteAllianceButton.setVisibility(View.VISIBLE);
                                     binding.deleteAllianceButton.setOnClickListener(v -> {
-                                        if(!alliance.isMissionActive()) {
+                                        if(!alliance.isSpecialMissionActive()) {
                                             viewModel.deleteAlliance(alliance.getName());
                                             binding.allianceCard.setVisibility(View.GONE);
                                         }else{
@@ -140,7 +140,7 @@ public class FriendsFragment extends Fragment {
                                 } else {
                                     binding.leaveAllianceButton.setVisibility(View.VISIBLE);
                                     binding.leaveAllianceButton.setOnClickListener(v -> {
-                                        if(!alliance.isMissionActive()) {
+                                        if(!alliance.isSpecialMissionActive()) {
                                             viewModel.leaveAlliance(alliance.getName());
                                             binding.allianceCard.setVisibility(View.GONE);
                                         }else{

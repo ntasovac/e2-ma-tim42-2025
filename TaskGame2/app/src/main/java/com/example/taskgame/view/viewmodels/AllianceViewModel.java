@@ -49,7 +49,7 @@ public class AllianceViewModel extends ViewModel {
 
                 // If alliance has an active mission, load it immediately
                 if (alliance != null && alliance.isSpecialMissionActive() && alliance.getSpecialBossId() != null) {
-                    loadSpecialMissionByAlliance(alliance.getId());
+                    loadSpecialMissionByAlliance(alliance.getName());
                 }
             }
 
@@ -121,7 +121,7 @@ public class AllianceViewModel extends ViewModel {
     }
 
     public void rewardAllUsersFromAlliance(Alliance alliance) {
-        if (alliance == null || alliance.getParticipantIds() == null || alliance.getParticipantIds().isEmpty()) {
+        if (alliance == null || alliance.getMembers() == null || alliance.getMembers().isEmpty()) {
             System.out.println("⚠️ No participants found in alliance, skipping rewards.");
             return;
         }
@@ -129,22 +129,22 @@ public class AllianceViewModel extends ViewModel {
         UserRepository userRepo = new UserRepository();
         System.out.println("🎁 Starting reward distribution for alliance: " + alliance.getId());
 
-        for (String userId : alliance.getParticipantIds()) {
-            userRepo.getUserById(userId, new UserRepository.GetUserCallback() {
+        for (User member : alliance.getMembers()) {
+            userRepo.getUserById(member.getId().toString(), new UserRepository.GetUserCallback() {
                 @Override
                 public void onSuccess(User user) {
                     if (user != null) {
                         int userLevel = user.getLevel();
-                        rewardSingleUser(userId, userLevel);
-                        System.out.println("✅ Reward given to " + userId + " (Level " + userLevel + ")");
+                        rewardSingleUser(member.getId().toString(), userLevel);
+                        System.out.println("✅ Reward given to " + member.getId() + " (Level " + userLevel + ")");
                     } else {
-                        System.err.println("⚠️ User not found for ID: " + userId);
+                        System.err.println("⚠️ User not found for ID: " + member.getId());
                     }
                 }
 
                 @Override
                 public void onFailure(Exception e) {
-                    System.err.println("❌ Failed to fetch user " + userId + ": " + e.getMessage());
+                    System.err.println("❌ Failed to fetch user " + member.getId() + ": " + e.getMessage());
                 }
             });
         }
@@ -266,19 +266,19 @@ public class AllianceViewModel extends ViewModel {
         }
 
         // ✅ Step 2: Create a new mission if none active
-        int membersCount = alliance.getParticipantIds() != null ? alliance.getParticipantIds().size() : 0;
+        int membersCount = alliance.getMembers() != null ? alliance.getMembers().size() : 0;
         int totalHp = 100 * Math.max(1, membersCount);
 
         Map<String, Integer> userDamage = new HashMap<>();
-        if (alliance.getParticipantIds() != null) {
-            for (String uid : alliance.getParticipantIds()) {
-                userDamage.put(uid, 0);
+        if (alliance.getMembers() != null) {
+            for (User member : alliance.getMembers()) {
+                userDamage.put(String.valueOf(member.getId()), 0);
             }
         }
 
         SpecialMission mission = new SpecialMission();
         mission.setAllianceId(alliance.getId());
-        mission.setParticipantIds(alliance.getParticipantIds());
+        //mission.setParticipantIds(alliance.getMembers());
         mission.setStatus("ACTIVE");
         mission.setBossDefeated(false);
         mission.setTotalHp(totalHp);

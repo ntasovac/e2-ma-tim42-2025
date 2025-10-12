@@ -1,37 +1,40 @@
 package com.example.taskgame.data.repositories;
 
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.MutableLiveData;
+
 import com.example.taskgame.domain.models.Alliance;
+import com.example.taskgame.domain.models.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.SetOptions;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AllianceRepository {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final FirebaseAuth auth;
+    private final UserRepository userRepository;
 
     // Root collection: alliances
     private CollectionReference col() {
         return db.collection("alliancesNew");
-    }
-
-    /* ---------- Create ---------- */
-    public void create(Alliance alliance, final CreateCallback cb) {
-        if (alliance.getId() == null || alliance.getId().isEmpty()) {
-            String id = col().document().getId();
-            alliance.setId(id);
-        }
-        col().document(alliance.getId())
-                .set(alliance)
-                .addOnCompleteListener(t -> {
-                    if (t.isSuccessful()) cb.onSuccess(alliance.getId());
-                    else cb.onFailure(t.getException());
-                });
     }
 
     /* ---------- Get number of participants ---------- */
@@ -50,20 +53,13 @@ public class AllianceRepository {
                 });
     }
 
-    /* ---------- Delete ---------- */
-    public void delete(String allianceId, final VoidCallback cb) {
-        col().document(allianceId)
-                .delete()
-                .addOnCompleteListener(t -> {
-                    if (t.isSuccessful()) cb.onSuccess();
-                    else cb.onFailure(t.getException());
-                });
-    }
-
     /* ---------- Get one by ID ---------- */
     public void getById(String allianceId, final GetOneCallback cb) {
         col().document(allianceId).get().addOnCompleteListener(task -> {
-            if (!task.isSuccessful()) { cb.onFailure(task.getException()); return; }
+            if (!task.isSuccessful()) {
+                cb.onFailure(task.getException());
+                return;
+            }
             DocumentSnapshot d = task.getResult();
             if (d != null && d.exists()) {
                 Alliance a = d.toObject(Alliance.class);
@@ -77,7 +73,10 @@ public class AllianceRepository {
     /* ---------- Get all alliances ---------- */
     public void getAll(final GetAllCallback cb) {
         col().get().addOnCompleteListener(task -> {
-            if (!task.isSuccessful()) { cb.onFailure(task.getException()); return; }
+            if (!task.isSuccessful()) {
+                cb.onFailure(task.getException());
+                return;
+            }
 
             List<Alliance> list = new ArrayList<>();
             for (QueryDocumentSnapshot d : task.getResult()) {
@@ -112,8 +111,14 @@ public class AllianceRepository {
     /* ---------- Observe realtime ---------- */
     public ListenerRegistration observeAll(final StreamCallback cb) {
         return col().addSnapshotListener((snap, e) -> {
-            if (e != null) { cb.onFailure(e); return; }
-            if (snap == null) { cb.onChanged(new ArrayList<>()); return; }
+            if (e != null) {
+                cb.onFailure(e);
+                return;
+            }
+            if (snap == null) {
+                cb.onChanged(new ArrayList<>());
+                return;
+            }
 
             List<Alliance> list = new ArrayList<>();
             for (QueryDocumentSnapshot d : snap) {
@@ -144,18 +149,41 @@ public class AllianceRepository {
     }
 
     /* ---------- Callbacks ---------- */
-    public interface CreateCallback { void onSuccess(String id); void onFailure(Exception e); }
-    public interface VoidCallback { void onSuccess(); void onFailure(Exception e); }
-    public interface GetOneCallback { void onSuccess(Alliance alliance); void onFailure(Exception e); }
-    public interface GetAllCallback { void onSuccess(List<Alliance> list); void onFailure(Exception e); }
-    public interface StreamCallback { void onChanged(List<Alliance> list); void onFailure(Exception e); }
-}
+    public interface CreateCallback {
+        void onSuccess(String id);
+
+        void onFailure(Exception e);
+    }
+
+    public interface VoidCallback {
+        void onSuccess();
+
+        void onFailure(Exception e);
+    }
+
+    public interface GetOneCallback {
+        void onSuccess(Alliance alliance);
+
+        void onFailure(Exception e);
+    }
+
+    public interface GetAllCallback {
+        void onSuccess(List<Alliance> list);
+
+        void onFailure(Exception e);
+    }
+
+    public interface StreamCallback {
+        void onChanged(List<Alliance> list);
+
+        void onFailure(Exception e);
+    }
+
 
 // PREVIOUS CODE
-/*
-public AllianceRepository() {
+
+    public AllianceRepository() {
         auth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
         userRepository = new UserRepository();
     }
 
@@ -226,7 +254,8 @@ public AllianceRepository() {
 
         return liveData;
     }
-    public void acceptInvite(String inviteId, String receiverEmail, String allianceName){
+
+    public void acceptInvite(String inviteId, String receiverEmail, String allianceName) {
         db.collection("invites")
                 .document(inviteId)
                 .update("status", "accepted");
@@ -235,11 +264,13 @@ public AllianceRepository() {
             addMember(user, allianceName);
         });
     }
-    public void declineInvite(String inviteId, String receiverEmail){
+
+    public void declineInvite(String inviteId, String receiverEmail) {
         db.collection("invites")
                 .document(inviteId)
                 .update("status", "declined");
     }
+
     public void addMember(User user, String allianceName) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -400,4 +431,4 @@ public AllianceRepository() {
                         Log.e("AllianceRepo", "Error fetching alliance: " + name, e)
                 );
     }
- */
+}
