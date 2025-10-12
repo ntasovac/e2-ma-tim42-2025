@@ -10,15 +10,13 @@
         android:id="@+id/fragmentHome"
         android:name="com.example.taskgame.view.fragments.FragmentHome"
         android:label="FragmentHome"
-        tools:layout="@layout/fragment_home">
-    </fragment>
+        tools:layout="@layout/fragment_home"/>
 
     <fragment
         android:id="@+id/fragmentCategory"
         android:name="com.example.taskgame.view.fragments.CategoryFragment"
         android:label="Categories"
         tools:layout="@layout/fragment_category" />
-
     <fragment
         android:id="@+id/fragmentProfile"
         android:name="com.example.taskgame.view.fragments.ProfileFragment"
@@ -98,5 +96,28 @@
             app:argType="string" />
     </fragment>
 
+    <fragment
+        android:id="@+id/fragmentTask"
+        android:name="com.example.taskgame.view.fragments.TaskFragment"
+        android:label="Create Task"
+        tools:layout="@layout/fragment_task_create" />
 
+    <fragment
+        android:id="@+id/fragmentTasksOverview"
+        android:name="com.example.taskgame.view.fragments.TasksOverviewFragment"
+        android:label="Prikaz zadataka"
+        tools:layout="@layout/fragment_tasks_overview" />
+
+    <fragment
+        android:id="@+id/fragmentBossFight"
+        android:name="com.example.taskgame.view.fragments.BossFightFragment"
+        android:label="Boss Fight"
+        tools:layout="@layout/fragment_boss_fight" />
+
+    <!-- 🔹 New Alliance fragment -->
+    <fragment
+        android:id="@+id/fragmentAlliance"
+        android:name="com.example.taskgame.view.fragments.AllianceFragment"
+        android:label="Alliance"
+        tools:layout="@layout/fragment_alliance" />
 </navigation>

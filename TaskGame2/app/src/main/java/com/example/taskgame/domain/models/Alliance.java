@@ -1,92 +1,55 @@
 package com.example.taskgame.domain.models;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-
-import com.google.firebase.firestore.PropertyName;
-
-import java.util.ArrayList;
+import com.google.firebase.firestore.IgnoreExtraProperties;
 import java.util.List;
 
-public class Alliance implements Parcelable {
-    private  String Name;
-    private User Owner;
-    private List<User> Members;
-    @PropertyName("isMissionActive")
-    private boolean isMissionActive;
+@IgnoreExtraProperties
+public class Alliance {
+    private String id;                   // Alliance ID
+    private String leaderId;             // Leader of the alliance (user ID)
+    private List<String> participantIds; // All participant user IDs
 
-    public Alliance(String name, User owner){
-        this.Name = name;
-        this.Owner = owner;
-        this.Members = new ArrayList<>();
-        this.isMissionActive = false;
-    }
-    public Alliance(){}
+    private boolean specialMissionActive; // Whether a special mission is active
+    private String specialBossId;         // ID of the special boss (if any)
 
-    public String getName() {
-        return Name;
-    }
+    // Firestore requires an empty constructor
+    public Alliance() {}
 
-    public void setName(String name) {
-        Name = name;
+    public Alliance(String id, String leaderId, List<String> participantIds) {
+        this.id = id;
+        this.leaderId = leaderId;
+        this.participantIds = participantIds;
+        this.specialMissionActive = false; // default no mission
+        this.specialBossId = null;
     }
 
-    public User getOwner() {
-        return Owner;
-    }
+    // Getters
+    public String getId() { return id; }
+    public String getLeaderId() { return leaderId; }
+    public List<String> getParticipantIds() { return participantIds; }
+    public boolean isSpecialMissionActive() { return specialMissionActive; }
+    public String getSpecialBossId() { return specialBossId; }
 
-    public void setOwner(User owner) {
-        Owner = owner;
-    }
+    // Setters
+    public void setId(String id) { this.id = id; }
+    public void setLeaderId(String leaderId) { this.leaderId = leaderId; }
+    public void setParticipantIds(List<String> participantIds) { this.participantIds = participantIds; }
+    public void setSpecialMissionActive(boolean specialMissionActive) { this.specialMissionActive = specialMissionActive; }
+    public void setSpecialBossId(String specialBossId) { this.specialBossId = specialBossId; }
 
-    public List<User> getMembers() {
-        return Members;
-    }
-
-    public void setMembers(List<User> members) {
-        Members = members;
-    }
-
-    @PropertyName("isMissionActive")
-    public boolean isMissionActive() {
-        return isMissionActive;
-    }
-
-    @PropertyName("isMissionActive")
-    public void setMissionActive(boolean missionActive) {
-        isMissionActive = missionActive;
-    }
-
-    protected Alliance(Parcel in) {
-        Name = in.readString();
-        Owner = in.readParcelable(User.class.getClassLoader());
-        Members = new ArrayList<>();
-        isMissionActive = in.readBoolean();
-        in.readList(Members, User.class.getClassLoader());
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(Name);
-        dest.writeParcelable(Owner, flags);
-        dest.writeList(Members);
-        dest.writeBoolean(isMissionActive);
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    public static final Creator<Alliance> CREATOR = new Creator<Alliance>() {
-        @Override
-        public Alliance createFromParcel(Parcel in) {
-            return new Alliance(in);
+    // Utility: add participant
+    public void addParticipant(String userId) {
+        if (!participantIds.contains(userId)) {
+            participantIds.add(userId);
         }
+    }
 
-        @Override
-        public Alliance[] newArray(int size) {
-            return new Alliance[size];
-        }
-    };
+    public int getParticipantCount() {
+        return participantIds != null ? participantIds.size() : 0;
+    }
+
+    // Utility: remove participant
+    public void removeParticipant(String userId) {
+        participantIds.remove(userId);
+    }
 }

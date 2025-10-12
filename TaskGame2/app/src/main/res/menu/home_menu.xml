@@ -32,4 +32,18 @@
         android:title="@string/logout"
         android:icon="@drawable/ic_logout" />
 
+    <item
+        android:id="@+id/fragmentTask"
+        android:title="Create Task"/>
+
+    <item android:id="@+id/fragmentTasksOverview" android:title="Prikaz zadataka"/>
+
+    <item
+        android:id="@+id/fragmentBossFight"
+        android:title="Boss Fight"/>
+
+    <item
+        android:id="@+id/fragmentAlliance"
+        android:title="Alliance" />
+
 </menu>

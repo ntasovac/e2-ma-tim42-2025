@@ -1,0 +1,19 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background (total HP) -->
+    <item android:id="@android:id/background">
+        <shape>
+            <corners android:radius="6dp"/>
+            <solid android:color="#FFB3B3"/> <!-- light red -->
+        </shape>
+    </item>
+
+    <!-- Progress (current HP) -->
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape>
+                <corners android:radius="6dp"/>
+                <solid android:color="#B71C1C"/> <!-- dark red -->
+            </shape>
+        </clip>
+    </item>
+</layer-list>
