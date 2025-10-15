@@ -211,11 +211,14 @@ public class User implements Parcelable {
         this.Alliance = "";
         this.IsAllianceOwner = false;
         this.FCMToken = "";
+
+        this.Id = System.currentTimeMillis();
     }
     protected User(Parcel in){
         Username = in.readString();
         Email = in.readString();
         Avatar = in.readInt();
+
     }
 
     public Long getId() {

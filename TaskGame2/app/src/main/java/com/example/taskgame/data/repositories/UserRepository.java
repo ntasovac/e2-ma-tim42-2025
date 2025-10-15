@@ -13,6 +13,7 @@ import com.example.taskgame.domain.enums.EquipmentType;
 import com.example.taskgame.domain.enums.Title;
 import com.example.taskgame.domain.models.Boss;
 import com.example.taskgame.domain.models.Equipment;
+import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.domain.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Tasks;
@@ -75,16 +76,18 @@ public class UserRepository {
     // 🔹 New function: get user by id
     public void getUserById(String userId, final GetUserCallback callback) {
         db.collection("users")
-                .document(userId)
+                .whereEqualTo("id", Integer.parseInt(userId)) // or just userId if stored as string
+                .limit(1)
                 .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
-                        User user = task.getResult().toObject(User.class);
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        User user = querySnapshot.getDocuments().get(0).toObject(User.class);
                         callback.onSuccess(user);
                     } else {
-                        callback.onFailure(task.getException());
+                        callback.onFailure(new Exception("User not found"));
                     }
-                });
+                })
+                .addOnFailureListener(callback::onFailure);
     }
 
 
@@ -210,8 +213,25 @@ public class UserRepository {
                                         }
                                     });
 
+                            /*
+                            FirebaseFirestore.getInstance()
+                                    .collection("users")
+                                    .document(currentUser.getUid())
+                                    .get()
+                                    .addOnSuccessListener(document -> {
+                                        if (document.exists()) {
+                                            User user = document.toObject(User.class);
+                                            if (user != null) {
+                                                SessionManager.getInstance().setUserData(user);
+                                                Log.d("Session", "✅ User data stored in SessionManager: " + user.getId());
+                                            }
+                                        }
+                                    })
+                                    .addOnFailureListener(e ->
+                                            Log.e("Session", "❌ Failed to load user data", e));
+*/
                             userLiveData.postValue(currentUser);
-
+                            this.getCurrentUser();
                         } else {
                             errorLiveData.postValue("Please verify your email before login.");
                             auth.signOut();
@@ -238,6 +258,7 @@ public class UserRepository {
                     .addOnSuccessListener(documentSnapshot -> {
                         if (documentSnapshot.exists()) {
                             User user = documentSnapshot.toObject(User.class);
+                            SessionManager.getInstance().setUserData(user);
                             liveData.setValue(user);
                         } else {
                             liveData.setValue(null);

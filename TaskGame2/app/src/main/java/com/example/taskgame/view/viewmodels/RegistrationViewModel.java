@@ -54,6 +54,8 @@ public class RegistrationViewModel extends ViewModel {
         }
 
         User newUser = new User(username, email, avatar);
+        long randId = System.currentTimeMillis();
+        newUser.setId(randId);
 
         userRepository.registerUser(email, password, newUser, new UserRepository.RegisterCallback() {
             @Override

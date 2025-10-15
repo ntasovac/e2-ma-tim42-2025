@@ -2,6 +2,7 @@ package com.example.taskgame.view.fragments;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -179,6 +180,11 @@ public class TaskUpdateFragment extends Fragment {
 
 
         binding.actCategory.setText(t.getCategoryName(), false);
+        selectedCategory = new Category(
+                t.getCategoryId(),
+                t.getCategoryName(),
+                t.getCategoryColor()
+        );
 
         // Difficulty
         for (int i = 0; i < difficultyXp.length; i++) {
@@ -254,6 +260,7 @@ public class TaskUpdateFragment extends Fragment {
         binding.tvTotalXp.setText("Total XP: " + (chosenDifficultyXp + chosenImportanceXp));
     }
 
+    /*
     private void onUpdate() {
         String name = text(binding.etName);
         if (TextUtils.isEmpty(name)) return;
@@ -292,7 +299,7 @@ public class TaskUpdateFragment extends Fragment {
 
             @Override public void ok() {
                 //binding.btnSave.setEnabled(true);
-                toast("Task created");
+                toast("Task updated");
                 requireActivity()
                         .getSupportFragmentManager()
                         .popBackStack();
@@ -300,7 +307,99 @@ public class TaskUpdateFragment extends Fragment {
             }
             @Override public void error(Exception e) { binding.btnSave.setEnabled(true); }
         });
+    }*/
+    private void onUpdate() {
+        Log.d("TaskUpdateDebug", "🔹 onUpdate() called");
+
+        String name = text(binding.etName);
+        Log.d("TaskUpdateDebug", "📝 Name: " + name);
+        if (TextUtils.isEmpty(name)) {
+            Log.w("TaskUpdateDebug", "⚠️ Name is empty, aborting update");
+            return;
+        }
+
+        if (selectedCategory == null) {
+            Log.w("TaskUpdateDebug", "⚠️ No category selected, aborting update");
+            return;
+        }
+        if (startDateUtc == null) {
+            Log.w("TaskUpdateDebug", "⚠️ startDateUtc is null, aborting update");
+            return;
+        }
+        if (minutesOfDay == null) {
+            Log.w("TaskUpdateDebug", "⚠️ minutesOfDay is null, aborting update");
+            return;
+        }
+
+        String frequency = text(binding.actFrequency);
+        Integer interval = null;
+        String unit = null;
+        Log.d("TaskUpdateDebug", "🔁 Frequency: " + frequency);
+
+        if ("REPEATING".equals(frequency)) {
+            String iv = text(binding.etInterval);
+            Log.d("TaskUpdateDebug", "⏱ Interval raw value: " + iv);
+            if (!TextUtils.isEmpty(iv)) {
+                try {
+                    interval = Integer.parseInt(iv);
+                } catch (NumberFormatException e) {
+                    Log.e("TaskUpdateDebug", "❌ Invalid interval number format: " + iv, e);
+                }
+            }
+            unit = text(binding.actUnit);
+            Log.d("TaskUpdateDebug", "📏 Unit: " + unit);
+        }
+
+        Log.d("TaskUpdateDebug", "🧩 Category ID: " + selectedCategory.getId());
+        Log.d("TaskUpdateDebug", "🎨 Category Name: " + selectedCategory.getName());
+        Log.d("TaskUpdateDebug", "🎨 Category Color: " + selectedCategory.getColor());
+
+        Log.d("TaskUpdateDebug", "📆 StartDateUtc: " + startDateUtc);
+        Log.d("TaskUpdateDebug", "📆 EndDateUtc: " + endDateUtc);
+        Log.d("TaskUpdateDebug", "⏰ MinutesOfDay: " + minutesOfDay);
+
+        Log.d("TaskUpdateDebug", "⭐ Difficulty XP: " + chosenDifficultyXp);
+        Log.d("TaskUpdateDebug", "🔥 Importance XP: " + chosenImportanceXp);
+        Log.d("TaskUpdateDebug", "💪 Total XP: " + (chosenDifficultyXp + chosenImportanceXp));
+
+        editingTask.setName(name);
+        editingTask.setDescription(text(binding.etDesc));
+        editingTask.setCategoryId(selectedCategory.getId());
+        editingTask.setCategoryName(selectedCategory.getName());
+        editingTask.setCategoryColor(selectedCategory.getColor());
+        editingTask.setFrequency(frequency);
+        editingTask.setInterval(interval);
+        editingTask.setUnit(unit);
+        editingTask.setStartDateUtc(startDateUtc);
+        editingTask.setEndDateUtc(endDateUtc);
+        editingTask.setTimeOfDayMin(minutesOfDay);
+        editingTask.setDifficultyXp(chosenDifficultyXp);
+        editingTask.setImportanceXp(chosenImportanceXp);
+        editingTask.setTotalXp(chosenDifficultyXp + chosenImportanceXp);
+
+        Log.d("TaskUpdateDebug", "🧾 Final editingTask object: " + editingTask.toString());
+
+        binding.btnSave.setEnabled(false);
+        Log.d("TaskUpdateDebug", "💾 Calling updateTask...");
+
+        taskVm.updateTask(editingTask, new TaskViewModel.VoidResult() {
+            @Override
+            public void ok() {
+                Log.d("TaskUpdateDebug", "✅ updateTask() succeeded!");
+                toast("Task updated");
+                requireActivity()
+                        .getSupportFragmentManager()
+                        .popBackStack();
+            }
+
+            @Override
+            public void error(Exception e) {
+                Log.e("TaskUpdateDebug", "❌ updateTask() failed", e);
+                binding.btnSave.setEnabled(true);
+            }
+        });
     }
+
 
     private void toast(String msg) { Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show(); }
 
