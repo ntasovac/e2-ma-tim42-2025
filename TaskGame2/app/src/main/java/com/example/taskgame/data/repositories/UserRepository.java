@@ -11,6 +11,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.taskgame.R;
 import com.example.taskgame.domain.enums.EquipmentType;
 import com.example.taskgame.domain.enums.Title;
+import com.example.taskgame.domain.models.Badge;
 import com.example.taskgame.domain.models.Boss;
 import com.example.taskgame.domain.models.Equipment;
 import com.example.taskgame.domain.models.SessionManager;
@@ -97,24 +98,66 @@ public class UserRepository {
         void onFailure(Exception e);
     }
 
-    public void updateUserFields(String userId, int level, int xp, int pp, final RegisterCallback cb) {
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("Level", level);
-        updates.put("XP", xp);
-        updates.put("PP", pp);
-        System.out.println("🔄 Updating user " + userId + " -> Level: " + level + ", XP: " + xp + ", PP: " + pp);
+    public void updateUserEquipment(List<Equipment> updatedEquipment, OnCompleteListener<Object> listener) {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser == null) {
+            Log.e("Firestore", "⚠️ No logged-in user found");
+            return;
+        }
 
-        db.collection("users")
-                .document(userId)
-                .update(updates)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        cb.onSuccess();
-                    } else {
-                        cb.onFailure(task.getException());
-                    }
-                });
+        String userId = firebaseUser.getUid();
+        DocumentReference userRef = db.collection("users").document(userId);
+
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(userRef);
+
+            if (!snapshot.exists()) {
+                throw new FirebaseFirestoreException(
+                        "User document not found",
+                        FirebaseFirestoreException.Code.NOT_FOUND
+                );
+            }
+
+            // ✅ Update the equipment list atomically
+            transaction.update(userRef, "equipment", updatedEquipment);
+
+            Log.d("Firestore", "✅ Updated user equipment for userId=" + userId);
+            return null;
+        }).addOnCompleteListener(listener);
     }
+
+
+    public void updateUserStats(int level, int xp, int pp, OnCompleteListener<Object> listener) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Log.e("Firestore", "⚠️ No logged-in user found");
+            return;
+        }
+
+        DocumentReference userRef = db.collection("users").document(user.getUid());
+
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(userRef);
+
+            // Optional: verify user exists
+            if (!snapshot.exists()) {
+                throw new FirebaseFirestoreException(
+                        "User document not found",
+                        FirebaseFirestoreException.Code.NOT_FOUND
+                );
+            }
+
+            // Update the three key fields atomically
+            transaction.update(userRef, "level", level);
+            transaction.update(userRef, "experience", xp);
+            transaction.update(userRef, "powerPoints", pp);
+
+            Log.d("Firestore", "🔄 Transaction update: level=" + level + ", xp=" + xp + ", pp=" + pp);
+
+            return null;
+        }).addOnCompleteListener(listener);
+    }
+
 
     /** 🔹 Increment user's coins by a certain amount */
     public void incrementCoins(String userId, int amount, final RegisterCallback cb) {
@@ -123,44 +166,74 @@ public class UserRepository {
             return;
         }
 
-        db.collection("users").document(userId)
-                .update("coins", FieldValue.increment(amount))
-                .addOnSuccessListener(aVoid -> {
-                    System.out.println("✅ User " + userId + " coins increased by " + amount);
-                    cb.onSuccess();
+        // Convert userId to a number if needed
+        long numericId;
+        try {
+            numericId = Long.parseLong(userId);
+        } catch (NumberFormatException e) {
+            cb.onFailure(new IllegalArgumentException("Invalid userId format: " + userId));
+            return;
+        }
+
+        db.collection("users")
+                .whereEqualTo("id", numericId)  // ✅ Match by numeric userId field
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        DocumentSnapshot userDoc = querySnapshot.getDocuments().get(0);
+                        userDoc.getReference()
+                                .update("coins", FieldValue.increment(amount))
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d("UserRepository", "✅ User " + numericId + " coins increased by " + amount);
+                                    cb.onSuccess();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("UserRepository", "❌ Failed to increase coins for user " + numericId, e);
+                                    cb.onFailure(e);
+                                });
+                    } else {
+                        cb.onFailure(new Exception("No user found with id: " + numericId));
+                    }
                 })
                 .addOnFailureListener(e -> {
-                    System.err.println("❌ Failed to increase coins for user " + userId + ": " + e.getMessage());
+                    Log.e("UserRepository", "❌ Failed to query user by id: " + userId, e);
                     cb.onFailure(e);
                 });
     }
 
 
-    public void giveBossRewards(String userId, int bonusCoins) {
-        db.collection("users").document(userId).get().addOnCompleteListener(task -> {
-            if (!task.isSuccessful() || task.getResult() == null || !task.getResult().exists()) {
-                System.err.println("❌ User not found or fetch failed");
-                return;
+
+    public void giveBossRewards(int bonusCoins, OnCompleteListener<Object> listener) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Log.e("Firestore", "⚠️ No logged-in user found");
+            return;
+        }
+
+        DocumentReference userRef = db.collection("users").document(user.getUid());
+
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(userRef);
+
+            if (!snapshot.exists()) {
+                throw new FirebaseFirestoreException(
+                        "User document not found",
+                        FirebaseFirestoreException.Code.NOT_FOUND
+                );
             }
 
-            DocumentSnapshot snapshot = task.getResult();
-            Long currentCoins = snapshot.getLong("coins"); // Firestore stores numbers as Long
+            Long currentCoins = snapshot.getLong("coins");
             if (currentCoins == null) currentCoins = 0L;
 
             long newCoins = currentCoins + bonusCoins;
+            transaction.update(userRef, "coins", newCoins);
 
-            Map<String, Object> updates = new HashMap<>();
-            updates.put("coins", newCoins);
+            Log.d("Firestore", "💰 Transaction update: oldCoins=" + currentCoins +
+                    ", bonus=" + bonusCoins + ", newCoins=" + newCoins);
 
-            db.collection("users").document(userId).update(updates)
-                    .addOnCompleteListener(updateTask -> {
-                        if (updateTask.isSuccessful()) {
-                            System.out.println("✅ Coins updated to: " + newCoins);
-                        } else {
-                            System.err.println("❌ Failed to update coins: " + updateTask.getException());
-                        }
-                    });
-        });
+            return null;
+        }).addOnCompleteListener(listener);
     }
 
     public void registerUser(String email, String password, User user, RegisterCallback callback) {
@@ -245,6 +318,42 @@ public class UserRepository {
                     }
                 });
     }
+
+    public void reloadUser(OnCompleteListener<User> listener) {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser == null) {
+            listener.onComplete(Tasks.forException(new Exception("⚠️ No authenticated user found")));
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference userRef = db.collection("users").document(firebaseUser.getUid());
+
+        userRef.get()
+                .addOnSuccessListener(snapshot -> {
+                    if (!snapshot.exists()) {
+                        listener.onComplete(Tasks.forException(new Exception("❌ User document not found")));
+                        return;
+                    }
+
+                    User user = snapshot.toObject(User.class);
+                    if (user == null) {
+                        listener.onComplete(Tasks.forException(new Exception("❌ Failed to parse user data")));
+                        return;
+                    }
+
+                    // ✅ Store user in SessionManager
+                    SessionManager.getInstance().setUserData(user);
+                    Log.d("UserRepository", "✅ User reloaded and session updated: " + user.getId());
+
+                    listener.onComplete(Tasks.forResult(user));
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("UserRepository", "❌ Failed to reload user", e);
+                    listener.onComplete(Tasks.forException(e));
+                });
+    }
+
 
 
     public MutableLiveData<User> getCurrentUser() {
@@ -679,6 +788,82 @@ public class UserRepository {
                 );
     }
 
+    public void grantBadgeReward(String userId, Badge newBadge, OnCompleteListener<Badge> listener) {
+        if (newBadge == null) {
+            listener.onComplete(Tasks.forException(new Exception("Badge object is null")));
+            return;
+        }
+
+        long numericId;
+        try {
+            numericId = Long.parseLong(userId);
+        } catch (NumberFormatException e) {
+            listener.onComplete(Tasks.forException(new Exception("Invalid userId format: " + userId)));
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("users")
+                .whereEqualTo("id", numericId) // ✅ find by numeric user id field
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (querySnapshot.isEmpty()) {
+                        listener.onComplete(Tasks.forException(new Exception("User not found with id: " + userId)));
+                        return;
+                    }
+
+                    DocumentSnapshot userDoc = querySnapshot.getDocuments().get(0);
+                    User user = userDoc.toObject(User.class);
+                    if (user == null) {
+                        listener.onComplete(Tasks.forException(new Exception("User data invalid")));
+                        return;
+                    }
+
+                    // ✅ 1. Get or create badge list
+                    List<Badge> badges = user.getBadge();
+                    if (badges == null) badges = new ArrayList<>();
+
+                    boolean found = false;
+
+                    /*
+                    // ✅ 2. Merge or add new badge
+                    for (int i = 0; i < badges.size(); i++) {
+                        Badge existing = badges.get(i);
+                        if (existing.getName().equalsIgnoreCase(newBadge.getName())) {
+                            // Upgrade existing badge (example: increment count or level)
+                            existing.setCount(existing.getCount() + 1);
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {*/
+                    int nextCount = badges.size() + 1;
+                    newBadge.setCount(nextCount);
+                    badges.add(newBadge);
+                    //}
+
+                    // ✅ 3. Save updated badge list to Firestore
+                    userDoc.getReference().update("badge", badges)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d("UserRepository", "🏅 Badge updated successfully for user " + userId);
+                                listener.onComplete(Tasks.forResult(newBadge));
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("UserRepository", "❌ Failed to update badge list", e);
+                                listener.onComplete(Tasks.forException(e));
+                            });
+
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("UserRepository", "❌ Failed to query user by id: " + userId, e);
+                    listener.onComplete(Tasks.forException(e));
+                });
+    }
+
+
     private void updateBossAndUser(OnCompleteListener<Object> listener){
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         if (firebaseUser == null) {
@@ -708,6 +893,142 @@ public class UserRepository {
             return null;
         });
     }
+    public void grantRandomEquipmentReward(OnCompleteListener<Equipment> listener) {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser == null) {
+            listener.onComplete(Tasks.forException(new Exception("No authenticated user")));
+            return;
+        }
+
+        DocumentReference userRef = db.collection("users").document(firebaseUser.getUid());
+
+        userRef.get().addOnSuccessListener(snapshot -> {
+            if (!snapshot.exists()) {
+                listener.onComplete(Tasks.forException(new Exception("User not found")));
+                return;
+            }
+
+            User user = snapshot.toObject(User.class);
+            if (user == null) {
+                listener.onComplete(Tasks.forException(new Exception("User data invalid")));
+                return;
+            }
+
+            // ✅ 1. Generate random equipment
+            Equipment rewardEquipment = getRandomEquipment();
+
+            if (rewardEquipment == null) {
+                // 🛑 No equipment reward this time, just return
+                listener.onComplete(Tasks.forResult(null));
+                return;
+            }
+
+            // ✅ 2. Merge or add to user's equipment list
+            List<Equipment> userEquip = user.getEquipment();
+            boolean found = false;
+
+            if (userEquip != null) {
+                for (int i = 0; i < userEquip.size(); i++) {
+                    Equipment eq = userEquip.get(i);
+                    if (eq.getName().equalsIgnoreCase(rewardEquipment.getName())) {
+                        // Upgrade logic
+                        if (eq.getType() == EquipmentType.CLOTHING) {
+                            eq.setEffectAmount(eq.getEffectAmount() + 10);
+                            eq.setUsageCount(2);
+                        } else {
+                            double newEffect = eq.getEffectAmount() + 0.02;
+                            newEffect = Math.round(newEffect * 100.0) / 100.0;
+                            eq.setEffectAmount(newEffect);
+                        }
+                        found = true;
+                        break;
+                    }
+                }
+            } else {
+                userEquip = new ArrayList<>();
+            }
+
+            if (!found) {
+                userEquip.add(rewardEquipment);
+            }
+
+            // ✅ 3. Save updated equipment to Firestore
+            userRef.update("equipment", userEquip)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d("Reward", "✅ Equipment updated successfully");
+                        listener.onComplete(Tasks.forResult(rewardEquipment));
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("Reward", "❌ Failed to update equipment", e);
+                        listener.onComplete(Tasks.forException(e));
+                    });
+
+        }).addOnFailureListener(e ->
+                listener.onComplete(Tasks.forException(e))
+        );
+    }
+
+    private Equipment getRandomEquipment() {
+        long lastBossReward = 1;
+        Random random = new Random();
+        int number = random.nextInt(100) + 1;
+
+        // 80% chance to get equipment, 20% chance to get nothing
+        if (number > 80) {
+            return null; // ❌ No reward
+        }
+
+        Equipment rewardEquipment;
+
+        int equipmentNumber = random.nextInt(100) + 1;
+        if (equipmentNumber <= 80) {
+            // 80% chance for clothing
+            int clothesNumber = random.nextInt(120) + 1;
+            if (clothesNumber <= 100) {
+                rewardEquipment = new Equipment(
+                        EquipmentType.CLOTHING, "Gloves",
+                        (int) Math.ceil(lastBossReward * 0.6),
+                        "Gives power point increase by 10% for two boss fights.",
+                        10, 2, R.drawable.gloves, false, false
+                );
+            } else if (clothesNumber <= 110) { // fixed condition (was duplicated)
+                rewardEquipment = new Equipment(
+                        EquipmentType.CLOTHING, "Shield",
+                        (int) Math.ceil(lastBossReward * 0.6),
+                        "Increases odds of landing a successful attack by 10%.",
+                        10, 2, R.drawable.shield, false, false
+                );
+            } else {
+                rewardEquipment = new Equipment(
+                        EquipmentType.CLOTHING, "Boots",
+                        (int) Math.ceil(lastBossReward * 0.8),
+                        "Increases odds of getting an additional attack by 40%.",
+                        40, 2, R.drawable.boots, false, false
+                );
+            }
+        } else {
+            // 20% chance for weapon
+            int weaponsNumber = random.nextInt(100) + 1;
+            if (weaponsNumber <= 50) {
+                rewardEquipment = new Equipment(
+                        EquipmentType.WEAPON, "Sword", 0,
+                        "Permanently increases power by 5%",
+                        5, -1, R.drawable.sword, false, true
+                );
+            } else {
+                rewardEquipment = new Equipment(
+                        EquipmentType.WEAPON, "Bow and Arrow", 0,
+                        "Permanently increases boss coin reward bonus by 5%",
+                        5, -1, R.drawable.bow_and_arrow, false, true
+                );
+            }
+        }
+
+        return rewardEquipment;
+    }
+
+
+
 
 
     private void addEquipment(Equipment rewardEquipment){

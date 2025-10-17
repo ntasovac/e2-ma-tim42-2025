@@ -2,6 +2,7 @@ package com.example.taskgame.view.viewmodels;
 
 import static androidx.core.content.ContentProviderCompat.requireContext;
 
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -25,6 +26,8 @@ public class BossFightViewModel extends ViewModel {
     public void loadBoss(String userId, int userLevel) {
         int bossIndex = userLevel - 1;
 
+
+        Log.d("BossFight", " Load Boss user ID : " + SessionManager.getInstance().getUserId());
         bossRepository.getFirstActiveBoss(SessionManager.getInstance().getUserId(),
                 new BossRepository.GetOneCallback() {
                     @Override
@@ -80,15 +83,21 @@ public class BossFightViewModel extends ViewModel {
         if (boss == null || !boss.canAttack()) return false;
 
         boolean hit = boss.takeDamage(damage);
+        Log.d("BossFight", "💥 Attack result: " + (hit ? "HIT!" : "MISS!") +
+                " | Boss HP left: " + boss.getHp() +
+                "/" + boss.getTotalHp());
 
         bossRepository.update(boss, new BossRepository.VoidCallback() {
             @Override
             public void onSuccess() {
+                //System.out.println("✅ Boss update successful — new HP: " + boss.getCurrentHealth());
                 bossLiveData.setValue(boss); // refresh
             }
 
             @Override
-            public void onFailure(Exception e) { }
+            public void onFailure(Exception e) {
+                System.err.println("❌ Failed to update boss: " + e.getMessage());
+            }
         });
 
         return hit;
@@ -103,13 +112,14 @@ public class BossFightViewModel extends ViewModel {
             return;
         }
 
-        String userId = SessionManager.getInstance().getUserId();
-        int bossIndex = boss.getBossIndex();
+        //String userId = SessionManager.getInstance().getUserId();
 
-        bossRepository.setBossPending(userId, bossIndex, new BossRepository.VoidCallback() {
+        String bossId = boss.getId(); // e.g. "boss_123_0"
+
+        bossRepository.setBossPending(bossId, new BossRepository.VoidCallback() {
             @Override
             public void onSuccess() {
-                System.out.println("✅ Boss " + bossIndex + " set to PENDING");
+                System.out.println("✅ Boss " + bossId + " set to PENDING");
             }
 
             @Override
@@ -117,6 +127,7 @@ public class BossFightViewModel extends ViewModel {
                 System.err.println("❌ Failed to set boss pending: " + e.getMessage());
             }
         });
+
     }
 
 }

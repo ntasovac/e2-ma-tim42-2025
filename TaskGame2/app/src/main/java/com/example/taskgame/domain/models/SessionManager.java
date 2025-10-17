@@ -1,9 +1,16 @@
 package com.example.taskgame.domain.models;
 
+import com.google.firebase.firestore.PropertyName;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class SessionManager {
     private static SessionManager instance;
     private String userId;
     private int userLevel;
+
+    private User user;
 
     private int PP;
 
@@ -12,6 +19,8 @@ public class SessionManager {
     private int XP;
 
     private int Coins;
+
+    private List<Equipment> Equipment;
 
     private int equipmentPP;
     private double bonusCoinPercent;
@@ -72,6 +81,7 @@ public class SessionManager {
     public int getUserEquipmentPP() {
         return equipmentPP;
     }
+
     public void setUserEquipmentPP(int eqPP) {
          this.equipmentPP = eqPP;
     }
@@ -84,18 +94,22 @@ public class SessionManager {
         return totalPP;
     }
 
+    public List<Equipment> getEquipment() { return Equipment; }
+
+    public void setEquipment(List<Equipment> equipment) { this.Equipment = equipment; }
+
     public void increaseUserXP(int xp) {
         this.XP += xp;
     }
 
     public void increaseUserLevelandPP() {
-        if(this.userLevel <= 1){
-            this.userLevel = 2;
+        if(this.userLevel <= 0){
+            this.userLevel = 1;
             this.PP = 40;
         } else {
             this.userLevel += 1;
 
-            this.PP = (int) (40.0 * Math.pow(7.0 / 4.0, userLevel - 2));
+            this.PP = (int) (40.0 * Math.pow(7.0 / 4.0, userLevel - 1));
         }
         System.out.println("🔄 Increase Level user " + userId + " -> Level: " + userLevel + ", PP: " + PP);
 
@@ -106,12 +120,21 @@ public class SessionManager {
         this.userId = user.getId().toString();
         this.XP = user.getExperience();
         this.PP = user.getPowerPoints();
+        this.Coins = user.getCoins();
+        this.Equipment = new ArrayList<>(user.getEquipment());
+        this.user = user;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     public boolean CheckLvLUp(){
         int xp = this.getUserXP();
         int level = this.getUserLevel();
-        double totalXPforLevel = 200 * Math.pow(5.0 / 2.0, level - 1);
+
+        //user level krece od 0, pa je zato na 0 stepen = 200
+        double totalXPforLevel = 200 * Math.pow(5.0 / 2.0, level);
         //return true;
         return xp > totalXPforLevel;
     }

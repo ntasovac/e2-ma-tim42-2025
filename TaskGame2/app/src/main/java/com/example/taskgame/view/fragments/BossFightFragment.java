@@ -1,6 +1,7 @@
 package com.example.taskgame.view.fragments;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,17 +17,14 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.taskgame.R;
-import com.example.taskgame.data.repositories.SpecialEquipmentRepository;
-import com.example.taskgame.data.repositories.UserEquipmentRepository;
 import com.example.taskgame.data.repositories.UserRepository;
 import com.example.taskgame.domain.models.Boss;
+import com.example.taskgame.domain.models.Equipment;
 import com.example.taskgame.domain.models.SessionManager;
-import com.example.taskgame.domain.models.SpecialEquipment;
-import com.example.taskgame.domain.models.UserEquipment;
+import com.example.taskgame.domain.models.User;
 import com.example.taskgame.view.viewmodels.AllianceViewModel;
 import com.example.taskgame.view.viewmodels.BossFightViewModel;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class BossFightFragment extends Fragment {
@@ -119,6 +117,13 @@ public class BossFightFragment extends Fragment {
                     .show();
         });
 
+        /*
+
+        TESTING BADGE
+        allianceViewModel = new ViewModelProvider(this).get(AllianceViewModel.class);
+        User u = SessionManager.getInstance().getUser();
+        allianceViewModel.rewardSingleUser(u.getId().toString(), u.getLevel());*/
+
 
         btnAttack.setOnClickListener(v -> {
             int totalUserPP = SessionManager.getInstance().getUserPP() + SessionManager.getInstance().getUserEquipmentPP();
@@ -156,6 +161,7 @@ public class BossFightFragment extends Fragment {
 
 
                     if (boss.rollForEquipmentDrop() && !boss.isRewardGiven()) {
+                        /*
                         String eqId = boss.getRandomEquipmentId();
                         System.out.println("🎁 Player won equipment: " + eqId);
                         Toast.makeText(requireContext(), "🎁 Player won equipment: " + eqId, Toast.LENGTH_LONG).show();
@@ -173,7 +179,37 @@ public class BossFightFragment extends Fragment {
                                         System.err.println("❌ Failed to save equipment: " + e.getMessage());
                                     }
                                 }
-                        );
+                        );*/
+
+                        UserRepository userRepo = new UserRepository();
+
+                        userRepo.grantRandomEquipmentReward(task -> {
+                            if (task.isSuccessful()) {
+                                Equipment reward = task.getResult();
+                                if (reward != null) {
+                                    System.out.println("🎁 Player won equipment: " + reward.getName());
+                                    Toast.makeText(requireContext(),
+                                            "🎁 Player won equipment: " + reward.getName(),
+                                            Toast.LENGTH_LONG).show();
+                                } else {
+                                    System.out.println("ℹ️ No equipment dropped this time.");
+                                }
+                            } else {
+                                Exception e = task.getException();
+                                System.err.println("❌ Failed to grant random equipment: " + (e != null ? e.getMessage() : "unknown error"));
+                            }
+                        });
+
+                        userRepo.reloadUser(task -> {
+                            if (task.isSuccessful()) {
+                                User user = task.getResult();
+                                Log.d("UserRepository", "✅ User reloaded successfully: " + user.getUsername());
+                            } else {
+                                Exception e = task.getException();
+                                Log.e("UserRepository", "❌ Failed to reload user: " +
+                                        (e != null ? e.getMessage() : "unknown error"));
+                            }
+                        });
                     }
 
                 }
@@ -185,41 +221,24 @@ public class BossFightFragment extends Fragment {
 
         btnUseEquipment = view.findViewById(R.id.btnUseEquipment);
         btnUseEquipment.setOnClickListener(v -> {
-            UserEquipmentRepository userRepo = new UserEquipmentRepository();
-            SpecialEquipmentRepository eqRepo = new SpecialEquipmentRepository();
+            // Get the currently logged-in user from session
+            SessionManager session = SessionManager.getInstance();
+            User currentUser = session != null ? session.getUser() : null;
 
-            userRepo.getAll(userId, new UserEquipmentRepository.GetAllCallback() {
-                @Override
-                public void onSuccess(List<UserEquipment> list) {
-                    List<SpecialEquipment> equippedList = new ArrayList<>();
+            if (currentUser == null) {
+                Toast.makeText(getContext(), "User session not available", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-                    for (UserEquipment ue : list) {
-                        eqRepo.getById(ue.getEquipmentId(), new SpecialEquipmentRepository.GetOneCallback() {
-                            @Override
-                            public void onSuccess(SpecialEquipment eq) {
-                                if (eq != null) {
-                                    equippedList.add(eq);
-                                    // Once all are fetched, you can show dialog
-                                    if (equippedList.size() == list.size()) {
-                                        showEquipmentDialog(equippedList);
-                                    }
-                                }
-                            }
+            List<Equipment> equipmentList = currentUser.getEquipment();
 
-                            @Override
-                            public void onFailure(Exception e) {
-                                Toast.makeText(getContext(), "Failed to fetch equipment", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                }
-
-                @Override
-                public void onFailure(Exception e) {
-                    Toast.makeText(getContext(), "Failed to load equipment", Toast.LENGTH_SHORT).show();
-                }
-            });
+            if (equipmentList != null && !equipmentList.isEmpty()) {
+                showEquipmentDialog(equipmentList);
+            } else {
+                Toast.makeText(getContext(), "No equipment found", Toast.LENGTH_SHORT).show();
+            }
         });
+
 
     }
 
@@ -252,13 +271,24 @@ public class BossFightFragment extends Fragment {
 
         // 🔹 Call repository function
         UserRepository userRepo = new UserRepository();
-        userRepo.giveBossRewards(SessionManager.getInstance().getUserId(), finalCoins);
+        //userRepo.giveBossRewards(finalCoins);
 
-        Toast.makeText(requireContext(),
-                "💰 You earned " + finalCoins + " coins!",
-                Toast.LENGTH_LONG).show();
+        userRepo.giveBossRewards(finalCoins, task -> {
+            if (task.isSuccessful()) {
+                Toast.makeText(requireContext(),
+                        "💰 You earned " + finalCoins + " coins!",
+                        Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(requireContext(),
+                        "Failed to apply user coins",
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+
+
+
     }
-    private void showEquipmentDialog(List<SpecialEquipment> eqList) {
+    private void showEquipmentDialog(List<Equipment> eqList) {
         String[] names = new String[eqList.size()];
         for (int i = 0; i < eqList.size(); i++) {
             names[i] = eqList.get(i).getName() + " (" + eqList.get(i).getDescription() + ")";
@@ -267,40 +297,41 @@ public class BossFightFragment extends Fragment {
         new AlertDialog.Builder(getContext())
                 .setTitle("Choose equipment to toggle")
                 .setItems(names, (dialog, which) -> {
-                    SpecialEquipment chosen = eqList.get(which);
-                    String chosenId = chosen.getId();
+                    // Get selected equipment
+                    Equipment chosen = eqList.get(which);
+                    boolean newStatus = !chosen.isActivated(); // Toggle status
+                    chosen.setActivated(newStatus);
 
-                    UserEquipmentRepository userEqRepo = new UserEquipmentRepository();
-                    userEqRepo.toggleActive(
-                            SessionManager.getInstance().getUserId(),
-                            chosenId,
-                            new UserEquipmentRepository.ToggleCallback() {
-                                @Override
-                                public void onSuccess(boolean newStatus) {
-                                    Toast.makeText(getContext(),
-                                            chosen.getName() + " set to " + (newStatus ? "Active" : "Inactive"),
-                                            Toast.LENGTH_SHORT).show();
+                    // Update locally
+                    User user = SessionManager.getInstance().getUser();
 
-                                    // 🔹 Recalculate bonuses after status change
-                                    //userEqRepo.calculateActiveEquipmentBonuses();
+                    // Replace the updated equipment in user’s list
+                    for (int i = 0; i < user.getEquipment().size(); i++) {
+                        Equipment current = user.getEquipment().get(i);
+                        if (current != null && current.getName() != null &&
+                                current.getName().equalsIgnoreCase(chosen.getName())) {
+                            user.getEquipment().set(i, chosen);
+                            break;
+                        }
+                    }
 
-                                    userEqRepo.calculateActiveEquipmentBonuses(() -> {
-                                        int basePP = SessionManager.getInstance().getUserPP();
-                                        int equipmentPP = SessionManager.getInstance().getUserEquipmentPP();
-                                        int totalPP = basePP + equipmentPP;
+                    // 🔹 Update Firestore user document directly
+                    UserRepository userRepo = new UserRepository();
 
-                                        tvBasePP.setText("Base PP: " + basePP);
-                                        tvEquipmentPP.setText("Equipment PP: " + equipmentPP);
-                                        tvTotalPP.setText("Total PP: " + totalPP);
-                                    });
-                                }
+                    userRepo.updateUserEquipment(user.getEquipment(), task -> {
+                        if (task.isSuccessful()) {
+                            Toast.makeText(
+                                    getContext(),
+                                    chosen.getName() + " set to " + (newStatus ? "Active" : "Inactive"),
+                                    Toast.LENGTH_SHORT
+                            ).show();
 
-                                @Override
-                                public void onFailure(Exception e) {
-                                    Toast.makeText(getContext(), "Failed to toggle equipment", Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                    );
+                            // Optionally recalc PP here
+                            // recalculatePP(user);
+                        } else {
+                            Toast.makeText(getContext(), "Failed to update equipment", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 })
                 .show();
     }

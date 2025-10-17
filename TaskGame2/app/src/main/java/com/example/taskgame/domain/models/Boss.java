@@ -1,9 +1,12 @@
 package com.example.taskgame.domain.models;
 
+import com.google.firebase.firestore.PropertyName;
+
 import java.util.Random;
 
 public class Boss {
-    private String userId;   // kome pripada boss
+    private String id;
+    private Long userId;   // kome pripada boss
     private String name;
     private int level;       // nivo korisnika
     private int bossIndex;   // koji je ovo boss (1, 2, 3...)
@@ -21,11 +24,11 @@ public class Boss {
     // Firestore zahteva prazan konstruktor
     public Boss() {}
 
-    public Boss(String userId, int userLevel) {
+    public Boss(Long userId, int userLevel) {
         this.rewardGiven = false;
         this.userId = userId;
-        this.level = userLevel;
-        this.bossIndex = userLevel - 1;  // prvi boss se pojavljuje na levelu 2
+        this.level = userLevel + 1;
+        this.bossIndex = userLevel;  // prvi boss se pojavljuje na levelu 2
         this.name = "Boss " + bossIndex;
 
         // HP formula
@@ -52,7 +55,7 @@ public class Boss {
     }
 
     // Getters
-    public String getUserId() { return userId; }
+    public Long getUserId() { return userId; }
     public String getName() { return name; }
     public int getLevel() { return level; }
     public int getBossIndex() { return bossIndex; }
@@ -65,6 +68,10 @@ public class Boss {
         }
     }
 
+
+    public String getId() { return id; }
+
+    public void setId(String id) { this.id = id; }
     public boolean isRewardGiven() { return rewardGiven; }
     public void setRewardGiven(boolean rewardGiven) { this.rewardGiven = rewardGiven; }
     public int getCoins() { return coins; }
@@ -72,7 +79,7 @@ public class Boss {
     public int getAvailableAttacks() { return availableAttacks; }
 
     // Setters
-    public void setUserId(String userId) { this.userId = userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
     public void setName(String name) { this.name = name; }
     public void setLevel(int level) { this.level = level; }
     public void setBossIndex(int bossIndex) { this.bossIndex = bossIndex; }
@@ -111,7 +118,7 @@ public class Boss {
 
     // 🔹 Equipment reward logic
     public boolean rollForEquipmentDrop() {
-        this.rewardGiven = true;
+        //this.rewardGiven = true;
         double chance = isDefeated() ? 1.20 : 0.10; // 20% or 10%
         return Math.random() < chance;
     }

@@ -1,7 +1,7 @@
 package com.example.taskgame.view.viewmodels;
 
 
-import android.se.omapi.Session;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
@@ -9,17 +9,13 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.taskgame.data.repositories.AllianceRepository;
-import com.example.taskgame.data.repositories.BadgeRepository;
-import com.example.taskgame.data.repositories.PotionRepository;
 import com.example.taskgame.data.repositories.SpecialMissionRepository;
-import com.example.taskgame.data.repositories.UserEquipmentRepository;
 import com.example.taskgame.data.repositories.UserRepository;
 import com.example.taskgame.domain.models.Alliance;
-import com.example.taskgame.domain.models.Potion;
-import com.example.taskgame.domain.models.SessionManager;
+import com.example.taskgame.domain.models.Badge;
+import com.example.taskgame.domain.models.Equipment;
 import com.example.taskgame.domain.models.SpecialMission;
 import com.example.taskgame.domain.models.User;
-import com.example.taskgame.domain.models.UserEquipment;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -153,81 +149,58 @@ public class AllianceViewModel extends ViewModel {
 
 
     public void rewardSingleUser(String userId, int userLevel) {
-        int nextBossFullReward = (int) (200 * Math.pow(1.2, userLevel));
+        int nextBossFullReward = (int) (200 * Math.pow(1.2, userLevel+1));
         UserRepository userRepo = new UserRepository();
-        UserEquipmentRepository equipmentRepo = new UserEquipmentRepository();
 
-        // ✅ 1. Give potion
-        PotionRepository potionRepo = new PotionRepository();
-        potionRepo.addPotion(userId, new Potion(userId, "Health Potion"), new PotionRepository.VoidCallback() {
-            @Override public void onSuccess() {
-                System.out.println("✅ Potion rewarded to " + userId);
-            }
-            @Override public void onFailure(Exception e) {
-                System.err.println("❌ Failed to reward potion: " + e.getMessage());
+        // ✅ 1. Grant random equipment
+        userRepo.grantRandomEquipmentReward(task -> {
+            if (task.isSuccessful()) {
+                Equipment reward = task.getResult();
+                if (reward != null) {
+                    Log.d("RewardSystem", "🎁 Player won equipment: " + reward.getName());
+                } else {
+                    Log.d("RewardSystem", "ℹ️ No equipment dropped this time.");
+                }
+            } else {
+                Exception e = task.getException();
+                Log.e("RewardSystem", "❌ Failed to grant random equipment: " +
+                        (e != null ? e.getMessage() : "unknown error"));
             }
         });
 
-        // ✅ 2. Give random equipment to the user
-        String[] equipmentIds = {
-                "eq_golden_crown",
-                "eq_shadow_cloak",
-                "eq_sword_flames",
-                "eq_war_hammer"
-        };
-
-// Pick one at random
-        String randomEqId = equipmentIds[(int) (Math.random() * equipmentIds.length)];
-
-// Create and save the equipment
-        UserEquipment newEquipment = new UserEquipment(userId, randomEqId, false);
-
-        equipmentRepo.add(
-                userId,
-                newEquipment,
-                new UserEquipmentRepository.VoidCallback() {
-                    @Override
-                    public void onSuccess() {
-                        System.out.println("✅ Equipment " + randomEqId + " rewarded to user " + userId);
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) {
-                        System.err.println("❌ Failed to reward equipment: " + e.getMessage());
-                    }
-                }
-        );
-
-        // ✅ 3. Give 50% of next boss reward
+        // ✅ 2. Give 50% of next boss reward in coins
         int rewardCoins = (int) (nextBossFullReward * 0.5);
         userRepo.incrementCoins(userId, rewardCoins, new UserRepository.RegisterCallback() {
             @Override
             public void onSuccess() {
-                System.out.println("💰 Coins successfully rewarded to " + userId);
+                Log.d("RewardSystem", "💰 Coins successfully rewarded to " + userId +
+                        " (" + rewardCoins + " coins)");
             }
 
             @Override
             public void onFailure(Exception e) {
-                System.err.println("❌ Failed to reward coins: " + e.getMessage());
+                Log.e("RewardSystem", "❌ Failed to reward coins: " + e.getMessage());
+            }
+        });
+
+        // ✅ 3. Increment special mission badge count
+        //BadgeRepository badgeRepo = new BadgeRepository();
+        //UserRepository userRepo = new UserRepository();
+
+        Badge newBadge = new Badge("Special Mission Master");
+    userRepo.grantBadgeReward(userId, newBadge, task -> {
+            if (task.isSuccessful()) {
+                Log.d("RewardSystem", "🏅 Badge granted successfully for user " + userId);
+            } else {
+                Exception e = task.getException();
+                Log.e("RewardSystem", "❌ Failed to grant badge: " + (e != null ? e.getMessage() : "unknown error"));
             }
         });
 
 
-        // ✅ 4. Increment special mission badge count
-        BadgeRepository badgeRepo = new BadgeRepository();
-
-// Increment or create a badge for a user
-        badgeRepo.incrementBadge(userId, "Special Mission Master", new BadgeRepository.VoidCallback() {
-            @Override public void onSuccess() {
-                System.out.println("🏅 Badge incremented successfully!");
-            }
-
-            @Override public void onFailure(Exception e) {
-                System.err.println("❌ Failed to increment badge: " + e.getMessage());
-            }
-        });
 
     }
+
 
 
 

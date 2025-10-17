@@ -171,7 +171,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class User implements Parcelable {
-    private Long Id;
+    private Long id;
     private String Username;
     private String Email;
     private int Avatar;
@@ -185,6 +185,17 @@ public class User implements Parcelable {
     private int LevelThreshold;
     private List<Integer> Badges;
     private List<Equipment> Equipment;
+
+    private List<Badge> Badge;
+
+    public List<Badge> getBadge() {
+        return Badge;
+    }
+
+    public void setBadge(List<Badge> badge) {
+        Badge = badge;
+    }
+
     private  List<User> Friends;
     private List<User> FriendRequests;
     private String Alliance;
@@ -212,7 +223,7 @@ public class User implements Parcelable {
         this.IsAllianceOwner = false;
         this.FCMToken = "";
 
-        this.Id = System.currentTimeMillis();
+        this.id = System.currentTimeMillis();
     }
     protected User(Parcel in){
         Username = in.readString();
@@ -221,13 +232,10 @@ public class User implements Parcelable {
 
     }
 
-    public Long getId() {
-        return Id;
-    }
-
-    public void setId(Long id) {
-        Id = id;
-    }
+    @PropertyName("id")
+    public Long getId() { return id; }
+    @PropertyName("id")
+    public void setId(Long id) { this.id = id; }
 
     @PropertyName("username")
     public String getUsername() { return Username; }

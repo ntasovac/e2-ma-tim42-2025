@@ -2,6 +2,7 @@ package com.example.taskgame.view.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,7 +58,7 @@ public class TasksCalendarFragment extends Fragment {
                 specialMissionApplyTask(t);
                 UserRepository userRepo = new UserRepository();
                 String loggedUserId = SessionManager.getInstance().getUserId();
-
+                Log.d("FCM", "Task done user id " + loggedUserId.toString());
                 userRepo.getUserById(loggedUserId, new UserRepository.GetUserCallback() {
                     @Override
                     public void onSuccess(User user) {
@@ -69,7 +70,8 @@ public class TasksCalendarFragment extends Fragment {
                                 SessionManager.getInstance().increaseUserLevelandPP();
 
                                 BossRepository bossRepo = new BossRepository();
-                                Boss newBoss = new Boss(SessionManager.getInstance().getUserId(), SessionManager.getInstance().getUserLevel());
+                                long userId = Long.parseLong(SessionManager.getInstance().getUserId());
+                                Boss newBoss = new Boss(userId, SessionManager.getInstance().getUserLevel());
 
 
                                 vm.calculateSuccessRatio(new TaskViewModel.RatioResult() {
@@ -104,20 +106,15 @@ public class TasksCalendarFragment extends Fragment {
                             vm.resetBossesForNextFight();
                             // update user
                             SessionManager session = SessionManager.getInstance();
-                            userRepo.updateUserFields(
-                                    session.getUserId(),
+                            userRepo.updateUserStats(
                                     session.getUserLevel(),
                                     session.getUserXP(),
                                     session.getUserPP(),
-                                    new UserRepository.RegisterCallback() {
-                                        @Override
-                                        public void onSuccess() {
+                                    task -> {
+                                        if (task.isSuccessful()) {
                                             System.out.println("✅ User XP/PP/Level updated!");
-                                        }
-
-                                        @Override
-                                        public void onFailure(Exception e) {
-                                            System.err.println("❌ Failed to update user: " + e.getMessage());
+                                        } else {
+                                            System.err.println("❌ Failed to update user: " + task.getException().getMessage());
                                         }
                                     }
                             );
