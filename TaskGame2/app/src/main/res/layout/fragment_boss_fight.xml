@@ -78,15 +78,11 @@
 
     <!-- 🔹 New Button for Equipment -->
     <Button
-        android:id="@+id/btnUseEquipment"
-        android:text="Use Equipment"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
-
-    <Button
-        android:id="@+id/btnViewRewards"
-        android:text="View Possible Rewards"
+        android:id="@+id/btnExit"
+        android:text="Exit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp" />
+        android:visibility="gone"/>
+
+
 </LinearLayout>

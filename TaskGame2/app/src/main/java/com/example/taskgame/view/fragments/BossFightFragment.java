@@ -1,5 +1,6 @@
 package com.example.taskgame.view.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,6 +23,7 @@ import com.example.taskgame.domain.models.Boss;
 import com.example.taskgame.domain.models.Equipment;
 import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.domain.models.User;
+import com.example.taskgame.view.activities.HomeActivity;
 import com.example.taskgame.view.viewmodels.AllianceViewModel;
 import com.example.taskgame.view.viewmodels.BossFightViewModel;
 
@@ -34,9 +36,9 @@ public class BossFightFragment extends Fragment {
     private AllianceViewModel allianceViewModel;
     private ProgressBar hpBar;
     private TextView tvBossName, tvStatus, tvHp, tvAttacks, tvBasePP, tvEquipmentPP, tvTotalPP;
-    private Button btnAttack, btnViewRewards;
+    private Button btnAttack, btnExit;
 
-    private Button btnUseEquipment;
+    //private Button btnUseEquipment;
 
     @Nullable
     @Override
@@ -57,7 +59,7 @@ public class BossFightFragment extends Fragment {
         tvAttacks = view.findViewById(R.id.tvAttacks);
         hpBar = view.findViewById(R.id.hpBar);
         btnAttack = view.findViewById(R.id.btnAttack);
-        btnViewRewards = view.findViewById(R.id.btnViewRewards);
+        //btnViewRewards = view.findViewById(R.id.btnViewRewards);
 
 
         viewModel = new ViewModelProvider(this).get(BossFightViewModel.class);
@@ -74,7 +76,9 @@ public class BossFightFragment extends Fragment {
             tvStatus.setText("Status: " + boss.getStatus());
             //tvHp.setText("HP: " + (int)boss.getHp());
             tvHp.setText("HP: " + (int) boss.getHp() + " / " + (int) boss.getTotalHp());
-            tvAttacks.setText("Attacks left: " + boss.getAvailableAttacks());
+            int availableAttacks = boss.getAvailableAttacks() + SessionManager.getInstance().getAditionalAttacks();
+            //tvAttacks.setText("Attacks left: " + boss.getAvailableAttacks());
+            tvAttacks.setText("Attacks left: " + availableAttacks);
 
             hpBar.setMax((int)boss.getTotalHp()); // možeš dodati i maxHP ako želiš
             hpBar.setProgress((int)boss.getHp());
@@ -90,7 +94,7 @@ public class BossFightFragment extends Fragment {
             tvEquipmentPP.setText("Equipment PP: " + equipmentPP);
             tvTotalPP.setText("Total PP: " + totalPP);
         });
-
+        /*
         btnViewRewards.setOnClickListener(v -> {
             Boss boss = viewModel.getBoss().getValue();
             if (boss == null) {
@@ -115,7 +119,7 @@ public class BossFightFragment extends Fragment {
                     .setMessage(message)
                     .setPositiveButton("OK", null)
                     .show();
-        });
+        });*/
 
         /*
 
@@ -150,6 +154,7 @@ public class BossFightFragment extends Fragment {
                         }
                     }
                     btnAttack.setEnabled(false); // disable further attacks
+                    btnExit.setVisibility(View.VISIBLE);
 
 
                     if(!boss.isRewardGiven()){
@@ -219,25 +224,14 @@ public class BossFightFragment extends Fragment {
         });
 
 
-        btnUseEquipment = view.findViewById(R.id.btnUseEquipment);
-        btnUseEquipment.setOnClickListener(v -> {
-            // Get the currently logged-in user from session
-            SessionManager session = SessionManager.getInstance();
-            User currentUser = session != null ? session.getUser() : null;
-
-            if (currentUser == null) {
-                Toast.makeText(getContext(), "User session not available", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            List<Equipment> equipmentList = currentUser.getEquipment();
-
-            if (equipmentList != null && !equipmentList.isEmpty()) {
-                showEquipmentDialog(equipmentList);
-            } else {
-                Toast.makeText(getContext(), "No equipment found", Toast.LENGTH_SHORT).show();
-            }
+        btnExit = view.findViewById(R.id.btnExit);
+        btnExit.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), HomeActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            requireActivity().finish(); // optional: close current activity
         });
+
 
 
     }
@@ -284,9 +278,6 @@ public class BossFightFragment extends Fragment {
                         Toast.LENGTH_LONG).show();
             }
         });
-
-
-
     }
     private void showEquipmentDialog(List<Equipment> eqList) {
         String[] names = new String[eqList.size()];

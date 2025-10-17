@@ -75,7 +75,9 @@ public class BossFightViewModel extends ViewModel {
     public boolean isFightOver() {
         Boss boss = bossLiveData.getValue();
         if (boss == null) return true; // safe default
-        return boss.isDefeated() || boss.getAvailableAttacks() <= 0;
+
+        int availableAttacks = boss.getAvailableAttacks() + SessionManager.getInstance().getAditionalAttacks();
+        return boss.isDefeated() || availableAttacks <= 0;
     }
 
     public boolean attackBoss(int damage) {

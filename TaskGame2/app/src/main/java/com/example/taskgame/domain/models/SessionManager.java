@@ -1,5 +1,8 @@
 package com.example.taskgame.domain.models;
 
+import android.util.Log;
+
+import com.example.taskgame.domain.enums.Title;
 import com.google.firebase.firestore.PropertyName;
 
 import java.util.ArrayList;
@@ -14,6 +17,8 @@ public class SessionManager {
 
     private int PP;
 
+    private int aditionalAttacks;
+
     private int totalPP;
 
     private int XP;
@@ -23,6 +28,15 @@ public class SessionManager {
     private List<Equipment> Equipment;
 
     private int equipmentPP;
+
+    public int getAditionalAttacks() {
+        return aditionalAttacks;
+    }
+
+    public void setAditionalAttacks(int aditionalAttacks) {
+        this.aditionalAttacks = aditionalAttacks;
+    }
+
     private double bonusCoinPercent;
 
     private SessionManager() {}
@@ -106,10 +120,29 @@ public class SessionManager {
         if(this.userLevel <= 0){
             this.userLevel = 1;
             this.PP = 40;
+            this.user.setTitle(Title.BRONZE);
         } else {
             this.userLevel += 1;
 
             this.PP = (int) (40.0 * Math.pow(7.0 / 4.0, userLevel - 1));
+
+
+
+            Title title = user.getTitle();
+            Title currentTitle = user.getTitle();
+            Title[] titles = Title.values();
+            int nextIndex = currentTitle.ordinal() + 1;
+            if(title != Title.CHALLENGER) {
+                Title nextTitle = titles[nextIndex];
+                this.user.setTitle(nextTitle);
+
+                Log.d("TitleSystem", "🏅 Title upgraded from "
+                        + title.name()
+                        + " → " + nextTitle.name()
+                        + " for user: " + user.getUsername());
+                //transaction.update(userRef, "title", nextTitle.name());
+            }
+
         }
         System.out.println("🔄 Increase Level user " + userId + " -> Level: " + userLevel + ", PP: " + PP);
 
@@ -137,5 +170,10 @@ public class SessionManager {
         double totalXPforLevel = 200 * Math.pow(5.0 / 2.0, level);
         //return true;
         return xp > totalXPforLevel;
+    }
+
+    public double getTotalXPforLEVEL(){
+        int level = this.getUserLevel();
+        return  200 * Math.pow(5.0 / 2.0, level);
     }
 }

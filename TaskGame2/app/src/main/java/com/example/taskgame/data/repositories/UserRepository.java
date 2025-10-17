@@ -151,6 +151,8 @@ public class UserRepository {
             transaction.update(userRef, "level", level);
             transaction.update(userRef, "experience", xp);
             transaction.update(userRef, "powerPoints", pp);
+            User u = SessionManager.getInstance().getUser();;
+            transaction.update(userRef, "title", u.getTitle().name());
 
             Log.d("Firestore", "🔄 Transaction update: level=" + level + ", xp=" + xp + ", pp=" + pp);
 
@@ -547,8 +549,10 @@ public class UserRepository {
                     int number = random.nextInt(100) + 1;
                     if(number <= effectAmount) {
                         transaction.update(userRef, "attackCount", attackCount + 1);
+                        SessionManager.getInstance().setAditionalAttacks(1);
                         gainedAttack = true;
                     }else{
+                        SessionManager.getInstance().setAditionalAttacks(0);
                         gainedAttack= false;
                     }
                     break;
@@ -557,7 +561,8 @@ public class UserRepository {
                     transaction.update(userRef, "powerPoints", powerPoints);
                     break;
                 case "Bow and Arrow":
-                    transaction.update(bossRef, "bonus", 5);
+                    //transaction.update(bossRef, "bonus", 5);
+                    SessionManager.getInstance().setBonusCoinPercent(0.05);
                     break;
                 default:
                     throw new IllegalStateException("Invalid equipment: " + activatedEquipment.getName());
@@ -923,6 +928,10 @@ public class UserRepository {
                 return;
             }
 
+
+
+
+
             // ✅ 2. Merge or add to user's equipment list
             List<Equipment> userEquip = user.getEquipment();
             boolean found = false;
@@ -935,10 +944,12 @@ public class UserRepository {
                         if (eq.getType() == EquipmentType.CLOTHING) {
                             eq.setEffectAmount(eq.getEffectAmount() + 10);
                             eq.setUsageCount(2);
+                            rewardEquipment.setActivated(eq.isActivated());
                         } else {
                             double newEffect = eq.getEffectAmount() + 0.02;
                             newEffect = Math.round(newEffect * 100.0) / 100.0;
                             eq.setEffectAmount(newEffect);
+                            rewardEquipment.setActivated(eq.isActivated());
                         }
                         found = true;
                         break;
@@ -947,6 +958,8 @@ public class UserRepository {
             } else {
                 userEquip = new ArrayList<>();
             }
+
+            addEquipment(rewardEquipment);
 
             if (!found) {
                 userEquip.add(rewardEquipment);

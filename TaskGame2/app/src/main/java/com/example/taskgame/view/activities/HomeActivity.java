@@ -2,6 +2,7 @@ package com.example.taskgame.view.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -62,6 +63,38 @@ public class HomeActivity extends AppCompatActivity {
         UserRepository userRepo = new UserRepository();
         String loggedUserId = "1759088611"; // 👈 Replace with real logged-in user ID
 
+
+
+        userRepo.reloadUser(task -> {
+            if (task.isSuccessful()) {
+                User user = task.getResult();
+                if (user != null) {
+                    tvUserInfo.setText(user.getUsername() + " • ");
+                    SessionManager.getInstance().setUserData(user);
+                    tvUserInfo.setOnClickListener(v -> {
+                        SessionManager session = SessionManager.getInstance();
+
+                        String message = "XP: " + session.getUserXP() +
+                                "\nPP: " + session.getUserPP() +
+                                "\nLevel: " + session.getUserLevel() +
+                                "\nCoins: " + session.getCoins();
+
+                        new AlertDialog.Builder(HomeActivity.this)
+                                .setTitle("User Info")
+                                .setMessage(message)
+                                .setPositiveButton("OK", null)
+                                .show();
+                    });
+                }
+                Log.d("UserRepository", "✅ User reloaded successfully: " + user.getUsername());
+            } else {
+                Exception e = task.getException();
+                Log.e("UserRepository", "❌ Failed to reload user: " +
+                        (e != null ? e.getMessage() : "unknown error"));
+                tvUserInfo.setText("Error loading user");
+            }
+        });
+        /*
         if(SessionManager.getInstance().getUserId() != null){
             loggedUserId = SessionManager.getInstance().getUserId();
         }
@@ -92,7 +125,7 @@ public class HomeActivity extends AppCompatActivity {
             public void onFailure(Exception e) {
                 tvUserInfo.setText("Error loading user");
             }
-        });
+        });*/
 
 
         // IMPORTANT: use the new NavHostFragment ID from activity_home_content.xml

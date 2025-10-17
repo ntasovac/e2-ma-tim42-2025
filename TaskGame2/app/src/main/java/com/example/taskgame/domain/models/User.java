@@ -178,6 +178,9 @@ public class User implements Parcelable {
     private Title Title;
     private int Level;
     private int PowerPoints;
+
+    private int permanentBonusPowerPoints;
+    private int oneTimeBonusPowerPoints;
     private int Experience;
     private int Coins;
     private int SuccessfulAttackChance;

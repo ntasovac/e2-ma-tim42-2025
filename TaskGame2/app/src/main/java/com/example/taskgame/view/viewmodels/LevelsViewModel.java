@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.taskgame.data.repositories.UserRepository;
+import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.domain.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -51,8 +52,12 @@ public class LevelsViewModel extends ViewModel {
 
     public int getProgressPercent() {
         User u = userLiveData.getValue();
-        if (u == null || u.getLevelThreshold() <= 0) return 0;
-        int percent = (int) ((u.getExperience() * 100f) / u.getLevelThreshold());
+        //if (u == null || u.getLevelThreshold() <= 0) return 0;
+
+        double thresholdLevel = SessionManager.getInstance().getTotalXPforLEVEL();
+        if (u == null || thresholdLevel <= 0) return 0;
+        //int neededXp = (int) (thresholdLevel - user.getExperience());
+        int percent = (int) ((u.getExperience() * 100f) / thresholdLevel);
         if (percent < 0) percent = 0;
         if (percent > 100) percent = 100;
         return percent;

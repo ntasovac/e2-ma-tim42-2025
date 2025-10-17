@@ -22,6 +22,7 @@ import com.example.taskgame.data.repositories.BossRepository;
 import com.example.taskgame.databinding.FragmentEquipmentActivationBinding;
 import com.example.taskgame.databinding.FragmentProfileBinding;
 import com.example.taskgame.domain.models.Equipment;
+import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.view.activities.BossFightActivity;
 import com.example.taskgame.view.adapters.OwnedEquipmentListAdapter;
 import com.example.taskgame.view.viewmodels.EquipmentActivationViewModel;
@@ -54,10 +55,39 @@ public class EquipmentActivationFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        /*
         binding.fightButton.setOnClickListener(v -> {
             Intent intent = new Intent(requireContext(), BossFightActivity.class);
             startActivity(intent);
+        });*/
+        binding.fightButton.setOnClickListener(v -> {
+            String userId = SessionManager.getInstance().getUserId();
+
+            viewModel.hasActiveBoss(userId, task -> {
+                if (task.isSuccessful()) {
+                    boolean hasBoss = task.getResult();
+
+                    if (hasBoss) {
+                        // ✅ Active boss found → start BossFightActivity
+                        Intent intent = new Intent(requireContext(), BossFightActivity.class);
+                        startActivity(intent);
+                    } else {
+                        // ⚠️ No boss found → show message
+                        Toast.makeText(requireContext(),
+                                "⚠️ You don’t have an active boss yet!",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    // ❌ Firestore error
+                    Exception e = task.getException();
+                    Toast.makeText(requireContext(),
+                            "❌ Failed to check active boss: " +
+                                    (e != null ? e.getMessage() : "unknown error"),
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
         });
+
 
         viewModel.getUser().observe(getViewLifecycleOwner(), user -> {
             if (user != null) {

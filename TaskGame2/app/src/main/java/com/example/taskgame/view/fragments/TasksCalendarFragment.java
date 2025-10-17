@@ -66,7 +66,7 @@ public class TasksCalendarFragment extends Fragment {
                             SessionManager.getInstance().setUserData(user);
                             SessionManager.getInstance().increaseUserXP(t.getTotalXp());
                             if(SessionManager.getInstance().CheckLvLUp()){
-                                SessionManager.getInstance().setUserXP(0);
+                                //SessionManager.getInstance().setUserXP(0);
                                 SessionManager.getInstance().increaseUserLevelandPP();
 
                                 BossRepository bossRepo = new BossRepository();

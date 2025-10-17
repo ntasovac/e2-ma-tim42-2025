@@ -30,16 +30,7 @@ public class HomeViewModel extends ViewModel {
         userLiveData = userRepository.getCurrentUser();
         //bossLiveData = bossRepository.getByIndex();
 
-        userRepository.reloadUser(task -> {
-            if (task.isSuccessful()) {
-                User user = task.getResult();
-                Log.d("UserRepository", "✅ User reloaded successfully: " + user.getUsername());
-            } else {
-                Exception e = task.getException();
-                Log.e("UserRepository", "❌ Failed to reload user: " +
-                        (e != null ? e.getMessage() : "unknown error"));
-            }
-        });
+
     }
 
     public LiveData<String> getWelcomeText() {
