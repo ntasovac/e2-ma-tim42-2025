@@ -257,7 +257,9 @@ public class TaskUpdateFragment extends Fragment {
     }
 
     private void updateTotalXp() {
-        binding.tvTotalXp.setText("Total XP: " + (chosenDifficultyXp + chosenImportanceXp));
+        int level = editingTask.getLevel();
+        int totalXP = (int) ((chosenDifficultyXp + chosenImportanceXp) * Math.pow(1.5, level));
+        binding.tvTotalXp.setText("Total XP: " + totalXP);
     }
 
     /*

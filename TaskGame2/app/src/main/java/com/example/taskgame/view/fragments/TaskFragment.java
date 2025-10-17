@@ -197,7 +197,7 @@ public class TaskFragment extends Fragment {
         Task t = new Task();
         String userId = SessionManager.getInstance().getUserId();
         long userLongId = Long.parseLong(userId);
-        int userLevel = SessionManager.getInstance().getUserLevel();
+        int userLevel = SessionManager.getInstance().getUser().getLevel();
         t.setUserId(userLongId);
         t.setLevel(userLevel);
 

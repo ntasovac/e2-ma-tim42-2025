@@ -9,6 +9,7 @@ import com.example.taskgame.data.repositories.BossRepository;
 import com.example.taskgame.data.repositories.TaskRepository;
 import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.domain.models.Task;
+import com.example.taskgame.domain.models.User;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
@@ -65,7 +66,10 @@ public class TaskViewModel extends ViewModel {
     /* ---------- Create ---------- */
     public void createTask(Task t, final Result cb) {
         // compute total XP if caller forgot
-        t.setTotalXp(t.getDifficultyXp() + t.getImportanceXp());
+        int level = t.getLevel();
+        int totalXP = (int) ((t.getDifficultyXp() + t.getImportanceXp()) * Math.pow(1.5, level));
+
+        t.setTotalXp(totalXP);
         t.setStatus("ACTIVE");
         if (t.getCreatedAtUtc() == 0L) t.setCreatedAtUtc(System.currentTimeMillis());
 
@@ -77,6 +81,10 @@ public class TaskViewModel extends ViewModel {
 
     /* ---------- Update ---------- */
     public void updateTask(Task t, final VoidResult cb) {
+        int level = t.getLevel();
+        int totalXP = (int) ((t.getDifficultyXp() + t.getImportanceXp()) * Math.pow(1.5, level));
+
+        t.setTotalXp(totalXP);
         repo.update(userId, t, new TaskRepository.VoidCallback() {
             @Override public void onSuccess() { if (cb != null) cb.ok(); }
             @Override public void onFailure(Exception e) { if (cb != null) cb.error(e); }
