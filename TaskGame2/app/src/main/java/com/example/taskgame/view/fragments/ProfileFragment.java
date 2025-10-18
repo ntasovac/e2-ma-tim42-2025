@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -76,6 +77,11 @@ public class ProfileFragment extends Fragment {
 
             viewModel.changePassword();
         });
+        binding.btnViewStatistics.setOnClickListener(v ->
+                Navigation.findNavController(v)
+                        .navigate(R.id.action_profileFragment_to_statisticsFragment)
+        );
+
         viewModel.getMessage().observe(getViewLifecycleOwner(), msg -> {
             if (msg != null && !msg.isEmpty()) {
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
