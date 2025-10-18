@@ -239,7 +239,7 @@ public class BossFightFragment extends Fragment {
     private void specialMissionRegularHit(){
         // Step 1️⃣  Load the alliance for the current user first (this populates LiveData)
         allianceViewModel = new ViewModelProvider(this).get(AllianceViewModel.class);
-        allianceViewModel.loadAllianceByUser(SessionManager.getInstance().getUserId());
+        allianceViewModel.loadAlliance();
 
 // Step 2️⃣  Observe allianceLiveData and react once loaded
         allianceViewModel.getAlliance().observe(getViewLifecycleOwner(), alliance -> {

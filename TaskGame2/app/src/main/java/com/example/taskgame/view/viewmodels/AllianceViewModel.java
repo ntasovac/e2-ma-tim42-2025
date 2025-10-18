@@ -14,6 +14,7 @@ import com.example.taskgame.data.repositories.UserRepository;
 import com.example.taskgame.domain.models.Alliance;
 import com.example.taskgame.domain.models.Badge;
 import com.example.taskgame.domain.models.Equipment;
+import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.domain.models.SpecialMission;
 import com.example.taskgame.domain.models.User;
 
@@ -37,84 +38,103 @@ public class AllianceViewModel extends ViewModel {
     }
 
     /** 🔹 Load alliance by user ID */
-    public void loadAllianceByUser(String userId) {
-        repo.getByUserId(userId, new AllianceRepository.GetOneCallback() {
-            @Override
-            public void onSuccess(Alliance alliance) {
-                allianceLiveData.setValue(alliance);
 
-                // If alliance has an active mission, load it immediately
-                if (alliance != null && alliance.isSpecialMissionActive() && alliance.getSpecialBossId() != null) {
-                    loadSpecialMissionByAlliance(alliance.getName());
-                }
-            }
+    public void loadAlliance() {
+        String allianceName = SessionManager.getInstance().getUser().getAlliance();
 
-            @Override
-            public void onFailure(Exception e) {
-                allianceLiveData.setValue(null);
-            }
-        });
-    }
-
-    /** 🔹 Apply regular boss hit to special mission if active */
-    public void applySpecialMissionAction(String userId, String actionType, @Nullable String difficulty) {
-        Alliance alliance = allianceLiveData.getValue();
-        if (alliance == null || !alliance.isSpecialMissionActive()) {
-            System.out.println("Alliance vm, apply: ⚠️ No active special mission found.");
+        if (allianceName == null || allianceName.isEmpty()) {
+            Log.e("AllianceVM", "❌ User has no alliance name set in SessionManager.");
+            allianceLiveData.setValue(null);
             return;
         }
 
-        missionRepo.getByAllianceId(alliance.getId(), new SpecialMissionRepository.GetOneCallback() {
-            @Override
-            public void onSuccess(SpecialMission mission) {
-                if (mission == null) return;
-
-                switch (actionType) {
-                    case "storePurchase":
-                        mission.applyStorePurchase(userId);
-                        break;
-                    case "regularHit":
-                        mission.applyRegularHit(userId);
-                        break;
-                    case "task":
-                        mission.applyTask(userId, difficulty);
-                        break;
-                    case "otherTask":
-                        mission.applyOtherTask(userId);
-                        break;
-                    case "noUnfinished":
-                        mission.applyNoUnfinishedTasks(userId);
-                        break;
-                    case "dailyMessage":
-                        mission.applyDailyMessage(userId);
-                        break;
-                }
-
-                // ✅ Update mission in Firestore
-                missionRepo.update(mission, new SpecialMissionRepository.VoidCallback() {
-                    @Override
-                    public void onSuccess() {
-                        specialMissionLiveData.setValue(mission);
-                        System.out.println("✅ Updated special mission after " + actionType);
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) {
-                        System.err.println("❌ Failed to update special mission after " + actionType + ": " + e.getMessage());
-                    }
-                });
-
-                if(mission.isBossDefeated()){
-                    rewardAllUsersFromAlliance(alliance);
-                }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                System.err.println("❌ Failed to load special mission: " + e.getMessage());
+        Log.d("AllianceVM", "🔍 Loading alliance: " + allianceName);
+        AllianceRepository allianceRepo = new AllianceRepository();
+        allianceRepo.getAllianceByName(allianceName).observeForever(alliance -> {
+            if (alliance != null) {
+                allianceLiveData.setValue(alliance);
+                specialMissionLiveData.setValue(alliance.getSpecialMission());
+                Log.d("AllianceVM", "✅ Alliance loaded successfully: " + allianceName);
+            } else {
+                allianceLiveData.setValue(null);
+                Log.w("AllianceVM", "⚠️ Alliance not found: " + allianceName);
             }
         });
     }
+
+
+    /** 🔹 Apply regular boss hit to special mission if active */
+    public void applySpecialMissionAction(String userId, String actionType, @Nullable String difficulty) {
+        //Alliance currentAlliance = allianceLiveData.getValue();
+    /*
+        if (currentAlliance == null || !currentAlliance.isSpecialMissionActive()) {
+            System.out.println("⚠️ AllianceVM.apply: No active special mission found.");
+            return;
+        }*/
+
+        String allianceName = SessionManager.getInstance().getUser().getAlliance();
+
+        if (allianceName == null) {
+            System.out.println("⚠️ AllianceVM.apply: No active alliance found.");
+            return;
+        }
+
+        AllianceRepository allianceRepo = new AllianceRepository();
+
+        // Step 1️⃣: Fetch the latest alliance data from Firestore
+        allianceRepo.getAllianceByName(allianceName).observeForever(alliance -> {
+            if (alliance == null || alliance.getSpecialMission() == null) {
+                System.out.println("⚠️ AllianceVM.apply: No special mission found for alliance " + allianceName);
+                return;
+            }
+
+            SpecialMission mission = alliance.getSpecialMission();
+
+            // Step 2️⃣: Apply the action
+            switch (actionType) {
+                case "storePurchase":
+                    mission.applyStorePurchase(userId);
+                    break;
+                case "regularHit":
+                    mission.applyRegularHit(userId);
+                    break;
+                case "task":
+                    mission.applyTask(userId, difficulty);
+                    break;
+                case "otherTask":
+                    mission.applyOtherTask(userId);
+                    break;
+                case "noUnfinished":
+                    mission.applyNoUnfinishedTasks(userId);
+                    break;
+                case "dailyMessage":
+                    mission.applyDailyMessage(userId);
+                    break;
+                default:
+                    Log.w("AllianceVM", "⚠️ Unknown actionType: " + actionType);
+                    return;
+            }
+
+            // Step 3️⃣: Update the alliance's embedded mission
+            allianceRepo.updateSpecialMissionByName(allianceName, mission, true, task -> {
+                if (task.isSuccessful()) {
+                    alliance.setSpecialMission(mission);
+                    allianceLiveData.setValue(alliance);
+                    specialMissionLiveData.setValue(mission);
+                    System.out.println("✅ Special mission updated after action: " + actionType);
+                } else {
+                    System.err.println("❌ Failed to update mission after " + actionType + ": " +
+                            task.getException().getMessage());
+                }
+            });
+
+            // Step 4️⃣: Handle boss defeat
+            if (mission.isBossDefeated()) {
+                rewardAllUsersFromAlliance(alliance);
+            }
+        });
+    }
+
 
     public void rewardAllUsersFromAlliance(Alliance alliance) {
         if (alliance == null || alliance.getMembers() == null || alliance.getMembers().isEmpty()) {
@@ -206,6 +226,7 @@ public class AllianceViewModel extends ViewModel {
 
     /** 🔹 Load an existing special mission by ID */
     public void loadSpecialMissionByAlliance(String allianceId) {
+
         missionRepo.getByAllianceId(allianceId, new SpecialMissionRepository.GetOneCallback() {
             @Override
             public void onSuccess(SpecialMission mission) {
@@ -226,7 +247,7 @@ public class AllianceViewModel extends ViewModel {
     }
 
 
-    /** 🔹 Starts or resumes a special mission */
+    /** 🔹 Starts or resumes a special mission
     public void startSpecialMission(String specialBossId) {
         Alliance alliance = allianceLiveData.getValue();
         if (alliance == null) return;
@@ -287,5 +308,68 @@ public class AllianceViewModel extends ViewModel {
                 System.err.println("❌ Failed to create special mission: " + e.getMessage());
             }
         });
+    }*/
+
+    public void startSpecialMission() {
+
+        String allianceName = SessionManager.getInstance().getUser().getAlliance();
+        if (allianceName == null || allianceName.isEmpty()) {
+            Log.e("AllianceVM", "❌ Alliance name is null or empty.");
+            return;
+        }
+
+        AllianceRepository allianceRepo = new AllianceRepository();
+
+        // Step 1️⃣: Fetch alliance by name
+        allianceRepo.getAllianceByName(allianceName).observeForever(alliance -> {
+            if (alliance == null) {
+                Log.e("AllianceVM", "❌ Alliance with name '" + allianceName + "' not found.");
+                return;
+            }
+
+            // Step 2️⃣: Check if mission already active
+            if (Boolean.TRUE.equals(alliance.isSpecialMissionActive())) {
+                Log.d("AllianceVM", "⚠️ Mission already active — loading existing mission...");
+                specialMissionLiveData.setValue(alliance.getSpecialMission());
+                return;
+            }
+
+            // Step 3️⃣: Create a new mission
+            int membersCount = alliance.getMembers() != null ? alliance.getMembers().size() : 0;
+            membersCount += 1;
+            int totalHp = 100 * Math.max(1, membersCount);
+
+            Map<String, Integer> userDamage = new HashMap<>();
+            if (alliance.getMembers() != null) {
+                for (User member : alliance.getMembers()) {
+                    userDamage.put(String.valueOf(member.getId()), 0);
+                }
+            }
+
+            SpecialMission mission = new SpecialMission();
+            //mission.setAllianceId(alliance.getName());  // ✅ use alliance name as identifier
+            mission.setStatus("ACTIVE");
+            mission.setBossDefeated(false);
+            mission.setTotalHp(totalHp);
+            mission.setCurrentHp(totalHp);
+            mission.setUserDamage(userDamage);
+            mission.setUserActionCounts(new HashMap<>());
+            //mission.setBossId(specialBossId);
+
+            // Step 4️⃣: Create mission in Firestore (specialMissions collection)
+            allianceRepo.updateSpecialMissionByName(alliance.getName(), mission, true, task -> {
+                if (task.isSuccessful()) {
+                    alliance.setSpecialMissionActive(true);
+                    alliance.setSpecialMission(mission);
+                    allianceLiveData.setValue(alliance);
+                    specialMissionLiveData.setValue(mission);
+                    Log.d("AllianceVM", "✅ Special mission started for alliance: " + allianceName);
+                } else {
+                    Log.e("AllianceVM", "❌ Failed to update alliance mission", task.getException());
+                }
+            });
+
+        });
     }
+
 }

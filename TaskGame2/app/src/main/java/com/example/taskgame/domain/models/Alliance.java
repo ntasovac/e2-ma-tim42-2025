@@ -10,8 +10,18 @@ public class Alliance {
     private  String Name;
     private User Owner;
     private List<User> Members;
+    private SpecialMission specialMission;
     private String Id;
-    private boolean specialMissionActive; // Whether a special mission is active
+
+    public SpecialMission getSpecialMission() {
+        return specialMission;
+    }
+
+    public void setSpecialMission(SpecialMission specialMission) {
+        this.specialMission = specialMission;
+    }
+
+    private boolean isMissionActive; // Whether a special mission is active
     private String specialBossId;         // ID of the special boss (if any)
 
     // Firestore requires an empty constructor
@@ -21,7 +31,8 @@ public class Alliance {
         this.Name = name;
         this.Owner = owner;
         this.Members = new ArrayList<>();
-        this.specialMissionActive = false; // default no mission
+        this.isMissionActive = false; // default no mission
+        this.specialMission = new SpecialMission();
         this.specialBossId = null;
     }
 
@@ -59,12 +70,12 @@ public class Alliance {
         Name = name;
     }
 
-    public boolean isSpecialMissionActive() { return specialMissionActive; }
+    public boolean isSpecialMissionActive() { return isMissionActive; }
     public String getSpecialBossId() { return specialBossId; }
 
     // Setters
 
-    public void setSpecialMissionActive(boolean specialMissionActive) { this.specialMissionActive = specialMissionActive; }
+    public void setSpecialMissionActive(boolean specialMissionActive) { this.isMissionActive = specialMissionActive; }
     public void setSpecialBossId(String specialBossId) { this.specialBossId = specialBossId; }
 
 

@@ -109,7 +109,7 @@ public class AllianceFragment extends Fragment {
         }
 
         viewModel = new ViewModelProvider(this).get(AllianceViewModel.class);
-        viewModel.loadAllianceByUser(SessionManager.getInstance().getUserId());
+        viewModel.loadAlliance();
 
         tvAllianceName = view.findViewById(R.id.tvAllianceName);
         tvSpecialMissionStatus = view.findViewById(R.id.tvSpecialMissionStatus);
@@ -122,10 +122,10 @@ public class AllianceFragment extends Fragment {
             allianceId = alliance.getId();
             tvAllianceName.setText("Alliance ID: " + alliance.getId());
 
-            if (alliance.isSpecialMissionActive()) {
+            if (alliance.isSpecialMissionActive() || true) {
                 tvSpecialMissionStatus.setText("Special Mission: Active");
                 btnStartSpecialMission.setVisibility(View.GONE);
-                viewModel.loadSpecialMissionByAlliance(allianceId);
+                viewModel.loadAlliance();
                 viewModel.getSpecialMission().observe(getViewLifecycleOwner(), mission -> {
                     if (mission != null) {
                         updateSpecialMissionUI(mission);
@@ -143,10 +143,10 @@ public class AllianceFragment extends Fragment {
 
         // Start mission button
         btnStartSpecialMission.setOnClickListener(v -> {
-            viewModel.startSpecialMission("specialBoss_1"); // example boss
+            viewModel.startSpecialMission(); // example boss
             Toast.makeText(requireContext(), "🚀 Special mission started!", Toast.LENGTH_SHORT).show();
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                viewModel.loadSpecialMissionByAlliance(allianceId);
+                viewModel.loadAlliance();
             }, 1000);
         });
     }
