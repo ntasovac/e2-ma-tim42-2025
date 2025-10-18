@@ -83,6 +83,16 @@
                 android:layout_height="200dp"
                 android:layout_marginTop="16dp"/>
 
+            <Button
+                android:id="@+id/btn_view_statistics"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/viewStatistics"
+                android:textColor="@android:color/white"
+                android:minHeight="48dp"
+                android:minWidth="160dp"/>
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/owned_equipment_list"
                 android:layout_width="match_parent"

@@ -55,5 +55,7 @@
     <string name="owner">OWNER</string>
     <string name="members">MEMBERS</string>
     <string name="chat">CHAT</string>
+    <string name="streak">Streak: %1$d days</string>
+    <string name="viewStatistics">VIEW STATISTICS</string>
 
 </resources>
