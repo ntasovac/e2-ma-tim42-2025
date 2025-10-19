@@ -93,6 +93,26 @@
                 android:minHeight="48dp"
                 android:minWidth="160dp"/>
 
+            <TextView
+                android:id="@+id/profileBadgesLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/badges"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="8dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/profileBadgesList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:overScrollMode="never"
+                android:nestedScrollingEnabled="false"
+                android:orientation="horizontal"/>
+
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/owned_equipment_list"
                 android:layout_width="match_parent"

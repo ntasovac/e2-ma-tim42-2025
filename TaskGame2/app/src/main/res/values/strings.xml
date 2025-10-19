@@ -57,5 +57,7 @@
     <string name="chat">CHAT</string>
     <string name="streak">Streak: %1$d days</string>
     <string name="viewStatistics">VIEW STATISTICS</string>
+    <string name="taskStreak">"Task streak: %1$d"</string>
+    <string name="badges">Badges</string>
 
 </resources>

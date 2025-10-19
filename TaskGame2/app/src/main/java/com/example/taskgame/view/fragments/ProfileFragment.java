@@ -18,8 +18,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.taskgame.R;
 import com.example.taskgame.databinding.FragmentProfileBinding;
+import com.example.taskgame.domain.models.Badge;
 import com.example.taskgame.domain.models.Equipment;
 import com.example.taskgame.domain.models.User;
+import com.example.taskgame.view.adapters.BadgeAdapter;
 import com.example.taskgame.view.adapters.OwnedEquipmentListAdapter;
 import com.example.taskgame.view.viewmodels.ProfileViewModel;
 import com.google.zxing.BarcodeFormat;
@@ -28,6 +30,7 @@ import com.journeyapps.barcodescanner.BarcodeEncoder;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ProfileFragment extends Fragment {
 
@@ -35,6 +38,7 @@ public class ProfileFragment extends Fragment {
     private FragmentProfileBinding binding;
     public static ArrayList<Equipment> equipment = new ArrayList<>();
     private OwnedEquipmentListAdapter adapter;
+    private BadgeAdapter badgeAdapter;
 
     @Nullable
     @Override
@@ -91,6 +95,13 @@ public class ProfileFragment extends Fragment {
         viewModel.getUser().observe(getViewLifecycleOwner(), user -> {
             if (user != null) {
                 bindUser(user);
+                setupBadgeList(user);
+            }
+        });
+
+        viewModel.getUser().observe(getViewLifecycleOwner(), user -> {
+            if (user != null) {
+                bindUser(user);
 
                 equipment = new ArrayList<>(user.getEquipment());
                 for (Equipment eq : equipment) {
@@ -122,6 +133,21 @@ public class ProfileFragment extends Fragment {
                 recyclerView.setAdapter(adapter);
             }
         });
+    }
+
+    private void setupBadgeList(User user) {
+        List<Badge> badges = user.getBadge();
+        if (badges == null || badges.isEmpty()) {
+            binding.profileBadgesList.setVisibility(View.GONE);
+            binding.profileBadgesLabel.setVisibility(View.GONE);
+            return;
+        }
+
+        badgeAdapter = new BadgeAdapter(requireContext(), badges);
+        binding.profileBadgesList.setLayoutManager(
+                new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false)
+        );
+        binding.profileBadgesList.setAdapter(badgeAdapter);
     }
 
     private void bindUser(User user) {

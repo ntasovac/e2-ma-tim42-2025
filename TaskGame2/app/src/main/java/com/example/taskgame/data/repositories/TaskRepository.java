@@ -1,5 +1,7 @@
 package com.example.taskgame.data.repositories;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import com.example.taskgame.domain.models.Task;
@@ -12,7 +14,9 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TaskRepository {
 
@@ -126,6 +130,116 @@ public class TaskRepository {
         });
     }
 
+    public void getDoneTasks(String userId, GetTasksCallback cb) {
+        int id = Integer.parseInt(userId);
+        db.collection("tasks")
+                .whereEqualTo("status", "DONE")
+                .whereEqualTo("userId", id)
+                .get()
+                .addOnCompleteListener(t -> {
+                    if (!t.isSuccessful()) {
+                        cb.onFailure(t.getException());
+                        return;
+                    }
+
+                    int count = 0;
+                    for (QueryDocumentSnapshot d : t.getResult()) {
+                        count++;
+                    }
+                    Log.d("TaskRepository", "Uradjenih zadataka je "+ count);
+                    cb.onSuccess(count);
+                });
+    }
+    public void getActiveTasks(String userId, GetTasksCallback cb) {
+        int id = Integer.parseInt(userId);
+        db.collection("tasks")
+                .whereEqualTo("status", "ACTIVE")
+                .whereEqualTo("userId", id)
+                .get()
+                .addOnCompleteListener(t -> {
+                    if (!t.isSuccessful()) {
+                        cb.onFailure(t.getException());
+                        return;
+                    }
+
+                    int count = 0;
+                    for (QueryDocumentSnapshot d : t.getResult()) {
+                        count++;
+                        }
+                    cb.onSuccess(count);
+                });
+    }
+    public void getCancelledTasks(String userId, GetTasksCallback cb) {
+        int id = Integer.parseInt(userId);
+        db.collection("tasks")
+                .whereEqualTo("status", "CANCELLED")
+                .whereEqualTo("userId", id)
+                .get()
+                .addOnCompleteListener(t -> {
+                    if (!t.isSuccessful()) {
+                        cb.onFailure(t.getException());
+                        return;
+                    }
+
+                    int count = 0;
+                    for (QueryDocumentSnapshot d : t.getResult()) {
+                        count++;
+                    }
+                    cb.onSuccess(count);
+                });
+    }
+
+    public void getTaskStreak(String userId, GetTasksCallback cb) {
+        int id = Integer.parseInt(userId);
+        db.collection("tasks")
+                .whereEqualTo("userId", id)
+                .orderBy("startDateUtc", Query.Direction.ASCENDING)
+                .get()
+                .addOnCompleteListener(t -> {
+                    int maxCount = 0;
+                    int count = 0;
+                    for (QueryDocumentSnapshot d : t.getResult()) {
+                        String status = d.getString("status");
+                        if ("DONE".equals(status)) {
+                            count++;
+                            maxCount = Math.max(maxCount, count);
+                        } else if ("CANCELLED".equals(status)) {
+                            count = 0;
+                        }
+                    }
+                    cb.onSuccess(maxCount);
+                });
+    }
+    public void getDoneTasksAndCategories(String userId, GetCategoriesCallback cb) {
+        int id = Integer.parseInt(userId);
+        db.collection("tasks")
+                .whereEqualTo("userId", id)
+                .whereEqualTo("status", "DONE")
+                .get()
+                .addOnCompleteListener(t -> {
+                    if (!t.isSuccessful()) {
+                        cb.onFailure(t.getException());
+                        return;
+                    }
+                    Map<String, Integer> categoryCount = new HashMap<>();
+
+                    for (QueryDocumentSnapshot d : t.getResult()) {
+                        String category = d.getString("categoryName");
+
+                        if (category == null || category.isEmpty()) continue;
+
+                        if (categoryCount.containsKey(category)) {
+                            int current = categoryCount.get(category);
+                            categoryCount.put(category, current + 1);
+                        } else {
+                            categoryCount.put(category, 1);
+                        }
+                    }
+
+                    cb.onSuccess(categoryCount);
+                });
+    }
+
     /* ---------- Callbacks ---------- */
     public interface CreateCallback { void onSuccess(String id); void onFailure(Exception e); }
     public interface VoidCallback { void onSuccess(); void onFailure(Exception e); }
@@ -136,4 +250,13 @@ public class TaskRepository {
         void onSuccess(double ratio);
         void onFailure(Exception e);
     }
+    public interface GetTasksCallback {
+        void onSuccess(int count);
+        void onFailure(Exception e);
+    }
+    public interface GetCategoriesCallback {
+        void onSuccess(Map<String, Integer> categories);
+        void onFailure(Exception e);
+    }
+
 }
