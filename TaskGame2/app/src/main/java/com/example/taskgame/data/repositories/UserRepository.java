@@ -77,7 +77,7 @@ public class UserRepository {
     // 🔹 New function: get user by id
     public void getUserById(String userId, final GetUserCallback callback) {
         db.collection("users")
-                .whereEqualTo("id", Integer.parseInt(userId)) // or just userId if stored as string
+                .whereEqualTo("id", Long.parseLong(userId)) // or just userId if stored as string
                 .limit(1)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {

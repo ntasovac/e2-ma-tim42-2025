@@ -17,6 +17,13 @@
     <item
         android:id="@+id/fragmentLevels"
         android:title="@string/LevelView" />
+
+    <item
+        android:id="@+id/fragmentTask"
+        android:title="Create Task"/>
+
+    <item android:id="@+id/fragmentTasksOverview" android:title="Prikaz zadataka"/>
+
     <item
         android:id="@+id/fragmentEquipmentActivation"
         android:title="@string/boss_fight" />
@@ -33,17 +40,13 @@
         android:icon="@drawable/ic_logout" />
 
     <item
-        android:id="@+id/fragmentTask"
-        android:title="Create Task"/>
-
-    <item android:id="@+id/fragmentTasksOverview" android:title="Prikaz zadataka"/>
-
-    <item
         android:id="@+id/fragmentBossFight"
-        android:title="Boss Fight"/>
+        android:title="Boss Fight"
+        android:visible="false" />
 
     <item
         android:id="@+id/fragmentAlliance"
-        android:title="Alliance" />
+        android:title="Alliance"
+        android:visible="false" />
 
 </menu>
