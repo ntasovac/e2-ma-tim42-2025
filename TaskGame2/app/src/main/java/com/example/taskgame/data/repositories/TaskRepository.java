@@ -239,6 +239,38 @@ public class TaskRepository {
                     cb.onSuccess(categoryCount);
                 });
     }
+    public void getDoneTasksWeek(String userId, GetDoneTasksWeekCallback cb) {
+        int id = Integer.parseInt(userId);
+        long now = System.currentTimeMillis();
+        long sevenDaysAgo = now - 7L * 24 * 60 * 60 * 1000;
+
+        db.collection("tasks")
+                .whereEqualTo("userId", id)
+                .whereEqualTo("status", "DONE")
+                .whereGreaterThanOrEqualTo("startDateUtc", sevenDaysAgo)
+                .whereLessThanOrEqualTo("startDateUtc", now)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        Map<Integer, Integer> xpPerDay = new HashMap<>();
+
+                        for (QueryDocumentSnapshot doc : task.getResult()) {
+                            Long startDateUtc = doc.getLong("startDateUtc");
+                            Long totalXp = doc.getLong("totalXp");
+                            if (startDateUtc == null || totalXp == null) continue;
+
+                            int dayIndex = (int) ((startDateUtc - sevenDaysAgo) / (24L * 60 * 60 * 1000));
+                            xpPerDay.put(dayIndex, xpPerDay.getOrDefault(dayIndex, 0) + totalXp.intValue());
+                        }
+
+                        cb.onSuccess(xpPerDay);
+                    } else {
+                        cb.onFailure(task.getException() != null
+                                ? task.getException()
+                                : new Exception("Unknown error retrieving tasks"));
+                    }
+                });
+    }
 
     /* ---------- Callbacks ---------- */
     public interface CreateCallback { void onSuccess(String id); void onFailure(Exception e); }
@@ -258,5 +290,10 @@ public class TaskRepository {
         void onSuccess(Map<String, Integer> categories);
         void onFailure(Exception e);
     }
+    public interface GetDoneTasksWeekCallback {
+        void onSuccess(Map<Integer, Integer> xpPerDay);
+        void onFailure(Exception e);
+    }
+
 
 }
