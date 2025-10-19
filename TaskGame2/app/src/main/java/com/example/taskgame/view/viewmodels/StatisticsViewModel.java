@@ -24,6 +24,8 @@ public class StatisticsViewModel extends AndroidViewModel {
     private final MutableLiveData<Integer> streakCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> taskStreakCount = new MutableLiveData<>();
     private final MutableLiveData<Map<String, Integer>> taskCategoryStats = new MutableLiveData<>();
+    private final MutableLiveData<Map<Integer, Integer>> weeklyXpStats = new MutableLiveData<>();
+
 
     public StatisticsViewModel(@NonNull Application application) {
         super(application);
@@ -34,6 +36,7 @@ public class StatisticsViewModel extends AndroidViewModel {
     public LiveData<TaskStats> getTaskStats() {
         return taskStats;
     }
+    public LiveData<Map<Integer, Integer>> getWeeklyXpStats() {return weeklyXpStats;}
 
     public void loadTaskStatistics(String userId) {
         final int[] done = {0};
@@ -146,6 +149,19 @@ public class StatisticsViewModel extends AndroidViewModel {
             @Override
             public void onFailure(Exception e) {
                 taskCategoryStats.setValue(new HashMap<>());
+            }
+        });
+    }
+    public void updateWeeklyXpStats(String userId) {
+        repository.getDoneTasksWeek(userId, new TaskRepository.GetDoneTasksWeekCallback() {
+            @Override
+            public void onSuccess(Map<Integer, Integer> xpPerDay) {
+                weeklyXpStats.setValue(xpPerDay);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                weeklyXpStats.setValue(new HashMap<>());
             }
         });
     }

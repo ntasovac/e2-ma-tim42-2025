@@ -18,6 +18,7 @@ import com.example.taskgame.databinding.FragmentStatisticsBinding;
 import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.view.viewmodels.StatisticsViewModel;
 import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
@@ -25,6 +26,9 @@ import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
@@ -88,6 +92,15 @@ public class StatisticsFragment extends Fragment {
         });
 
         viewModel.updateTaskCategoryStats(userId);
+
+        setupLineChart(binding.lineChart);
+        viewModel.getWeeklyXpStats().observe(getViewLifecycleOwner(), weeklyData -> {
+            if (weeklyData != null && !weeklyData.isEmpty()) {
+                updateLineChart(binding.lineChart, weeklyData);
+            }
+        });
+
+        viewModel.updateWeeklyXpStats(userId);
     }
 
     private void setupPieChart(PieChart chart) {
@@ -171,6 +184,51 @@ public class StatisticsFragment extends Fragment {
 
         barChart.getAxisRight().setEnabled(false);
         barChart.invalidate();
+    }
+    private void setupLineChart(LineChart lineChart) {
+        lineChart.getDescription().setEnabled(false);
+        lineChart.setDrawGridBackground(false);
+        lineChart.setDrawBorders(false);
+        lineChart.setTouchEnabled(true);
+        lineChart.setPinchZoom(true);
+        lineChart.getLegend().setEnabled(false);
+
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setGranularity(1f);
+        xAxis.setDrawGridLines(false);
+        xAxis.setTextSize(12f);
+        xAxis.setLabelCount(7, true);
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(new String[]{"-6", "-5", "-4", "-3", "-2", "-1", "Today"}));
+
+        YAxis leftAxis = lineChart.getAxisLeft();
+        leftAxis.setGranularity(1f);
+        leftAxis.setDrawGridLines(true);
+
+        lineChart.getAxisRight().setEnabled(false);
+    }
+
+    private void updateLineChart(LineChart lineChart, Map<Integer, Integer> data) {
+        List<Entry> entries = new ArrayList<>();
+
+        for (int i = 0; i < 7; i++) {
+            float value = data.containsKey(i) ? data.get(i) : 0;
+            entries.add(new Entry(i, value));
+        }
+
+        LineDataSet dataSet = new LineDataSet(entries, "XP last 7 days");
+        dataSet.setColor(Color.parseColor("#4CAF50"));
+        dataSet.setCircleColor(Color.parseColor("#388E3C"));
+        dataSet.setLineWidth(2f);
+        dataSet.setCircleRadius(4f);
+        dataSet.setValueTextSize(12f);
+        dataSet.setValueTextColor(Color.BLACK);
+        dataSet.setMode(LineDataSet.Mode.LINEAR);
+
+
+        LineData lineData = new LineData(dataSet);
+        lineChart.setData(lineData);
+        lineChart.invalidate();
     }
     @Override
     public void onDestroyView() {
