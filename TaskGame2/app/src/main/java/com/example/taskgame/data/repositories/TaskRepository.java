@@ -131,7 +131,8 @@ public class TaskRepository {
     }
 
     public void getDoneTasks(String userId, GetTasksCallback cb) {
-        int id = Integer.parseInt(userId);
+        long id = Long.parseLong(userId);
+
         db.collection("tasks")
                 .whereEqualTo("status", "DONE")
                 .whereEqualTo("userId", id)
@@ -151,7 +152,7 @@ public class TaskRepository {
                 });
     }
     public void getActiveTasks(String userId, GetTasksCallback cb) {
-        int id = Integer.parseInt(userId);
+        long id = Long.parseLong(userId);
         db.collection("tasks")
                 .whereEqualTo("status", "ACTIVE")
                 .whereEqualTo("userId", id)
@@ -170,7 +171,7 @@ public class TaskRepository {
                 });
     }
     public void getCancelledTasks(String userId, GetTasksCallback cb) {
-        int id = Integer.parseInt(userId);
+        long id = Long.parseLong(userId);
         db.collection("tasks")
                 .whereEqualTo("status", "CANCELLED")
                 .whereEqualTo("userId", id)
@@ -190,7 +191,7 @@ public class TaskRepository {
     }
 
     public void getTaskStreak(String userId, GetTasksCallback cb) {
-        int id = Integer.parseInt(userId);
+        long id = Long.parseLong(userId);
         db.collection("tasks")
                 .whereEqualTo("userId", id)
                 .orderBy("startDateUtc", Query.Direction.ASCENDING)
@@ -211,7 +212,7 @@ public class TaskRepository {
                 });
     }
     public void getDoneTasksAndCategories(String userId, GetCategoriesCallback cb) {
-        int id = Integer.parseInt(userId);
+        long id = Long.parseLong(userId);
         db.collection("tasks")
                 .whereEqualTo("userId", id)
                 .whereEqualTo("status", "DONE")
@@ -240,7 +241,7 @@ public class TaskRepository {
                 });
     }
     public void getDoneTasksWeek(String userId, GetDoneTasksWeekCallback cb) {
-        int id = Integer.parseInt(userId);
+        long id = Long.parseLong(userId);
         long now = System.currentTimeMillis();
         long sevenDaysAgo = now - 7L * 24 * 60 * 60 * 1000;
 

@@ -68,8 +68,8 @@ public class EquipmentShopFragment extends Fragment {
                     Toast.makeText(getContext(), "Purchase successful!", Toast.LENGTH_SHORT).show();
                     allianceViewModel.applySpecialMissionAction(
                             SessionManager.getInstance().getUserId(),
-                            "storePurchase",   // or "task", "storePurchase", etc.
-                            null            // optional difficulty if needed
+                            "storePurchase",
+                            null
                     );
                 } else {
                     Toast.makeText(getContext(), "Not enough coins!", Toast.LENGTH_SHORT).show();

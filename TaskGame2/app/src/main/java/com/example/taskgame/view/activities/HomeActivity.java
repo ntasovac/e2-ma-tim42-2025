@@ -167,21 +167,30 @@ public class HomeActivity extends AppCompatActivity {
                 Toast.makeText(this, "You have been logged out", Toast.LENGTH_SHORT).show();
                 return true;
             }else if(id == R.id.fragmentEquipmentShop) {
-                int bossLevel = 2;//viewModel.getBossLevel();
-                if (bossLevel == 1) {
-                    Toast.makeText(this, "Defeat level 1 boss to unlock", Toast.LENGTH_SHORT).show();
-                    return true;
-                } else {
-                    Bundle bundle = new Bundle();
-                    bundle.putInt("bossLevel", bossLevel);
-                    NavOptions navOptions = new NavOptions.Builder()
-                            .setPopUpTo(R.id.fragmentHome, false)
-                            .setLaunchSingleTop(true)
-                            .build();
+                viewModel.getBossLevelAsync(new HomeViewModel.BossLevelCallback() {
+                    @Override
+                    public void onSuccess(int bossLevel) {
+                        if (bossLevel-1 == 0) {
+                            Toast.makeText(HomeActivity.this, "Defeat level 1 boss to unlock", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Bundle bundle = new Bundle();
+                            bundle.putInt("bossLevel", bossLevel);
 
-                    navController.navigate(R.id.fragmentEquipmentShop, bundle, navOptions);
-                    return true;
-                }
+                            NavOptions navOptions = new NavOptions.Builder()
+                                    .setPopUpTo(R.id.fragmentHome, false)
+                                    .setLaunchSingleTop(true)
+                                    .build();
+
+                            navController.navigate(R.id.fragmentEquipmentShop, bundle, navOptions);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        Toast.makeText(HomeActivity.this, "Failed to load boss level", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                return true;
             } else {
                 return NavigationUI.onNavDestinationSelected(item, navController);
             }

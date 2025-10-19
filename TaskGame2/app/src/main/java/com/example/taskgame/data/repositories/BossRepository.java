@@ -13,6 +13,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class BossRepository {
@@ -143,7 +144,35 @@ public class BossRepository {
                     }
                 });
     }
+    public void getFirstActiveOrPendingBoss(String userId, final GetOneCallback cb) {
+        Log.d("BossRepo", "🔍 getFirstActiveBoss() called for userId: " + userId);
 
+        Long luserId = Long.parseLong(userId);
+        col()
+                .whereEqualTo("userId", luserId)
+                .whereIn("status", Arrays.asList("ACTIVE", "PENDING"))
+                .orderBy("level", Query.Direction.ASCENDING)
+                .limit(1)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.e("BossRepo", "❌ Firestore query failed", task.getException());
+                        cb.onFailure(task.getException());
+                        return;
+                    }
+
+                    if (task.getResult() != null && !task.getResult().isEmpty()) {
+                        DocumentSnapshot doc = task.getResult().getDocuments().get(0);
+                        Boss boss = doc.toObject(Boss.class);
+                        Log.d("BossRepo", "🏆 Found active boss: " +
+                                (boss != null ? boss.getName() + " (Level " + boss.getLevel() + ")" : "null"));
+                        cb.onSuccess(boss);
+                    } else {
+                        Log.w("BossRepo", "⚠️ No active bosses found for userId: " + userId);
+                        cb.onSuccess(null);
+                    }
+                });
+    }
 
     /* ---------- Reset all pending bosses for next fight ---------- */
     public void resetAllPendingBossesForNextFight(String userId, final VoidCallback cb) {

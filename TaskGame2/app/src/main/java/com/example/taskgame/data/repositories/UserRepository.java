@@ -1,10 +1,12 @@
 package com.example.taskgame.data.repositories;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -16,6 +18,8 @@ import com.example.taskgame.domain.models.Boss;
 import com.example.taskgame.domain.models.Equipment;
 import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.domain.models.User;
+import com.example.taskgame.view.activities.HomeActivity;
+import com.example.taskgame.view.viewmodels.HomeViewModel;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.AuthCredential;
@@ -45,6 +49,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import androidx.annotation.NonNull;
+import androidx.navigation.NavOptions;
+
 import com.example.taskgame.domain.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -63,12 +69,14 @@ public class UserRepository {
     private final FirebaseAuth auth;
     private final MutableLiveData<FirebaseUser> userLiveData;
     private final MutableLiveData<String> errorLiveData;
+    private final BossRepository bossRepository;
 
     public UserRepository() {
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         userLiveData = new MutableLiveData<>();
         errorLiveData = new MutableLiveData<>();
+        bossRepository = new BossRepository();
         if (auth.getCurrentUser() != null) {
             userLiveData.postValue(auth.getCurrentUser());
         }
@@ -623,73 +631,92 @@ public class UserRepository {
         }).addOnCompleteListener(listener);
     }
 
-    public void upgradeEquipment(int equipmentIndex, OnCompleteListener<Object> listener){
+    public void upgradeEquipment(int equipmentIndex, OnCompleteListener<Object> listener) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Log.e("upgradeEquipment", "❌ No logged-in user!");
+            listener.onComplete(Tasks.forException(
+                    new FirebaseFirestoreException("User not logged in", FirebaseFirestoreException.Code.ABORTED)
+            ));
+            return;
+        }
+
         DocumentReference userRef = db.collection("users").document(user.getUid());
-        DocumentReference bossRef = db.collection("boss").document("levelBoss");
 
-        db.runTransaction(transaction -> {
-            DocumentSnapshot userSnapshot = transaction.get(userRef);
-            DocumentSnapshot bossSnapshot = transaction.get(bossRef);
-            if (!userSnapshot.exists()) {
-                Log.e("upgradeEquipment", "User document does not exist!");
-                throw new FirebaseFirestoreException(
-                        "User not found",
-                        FirebaseFirestoreException.Code.ABORTED
-                );
+        getBossLevel(new HomeViewModel.BossLevelCallback() {
+            @Override
+            public void onSuccess(int bossLevel) {
+
+
+                db.runTransaction(transaction -> {
+                    DocumentSnapshot userSnapshot = transaction.get(userRef);
+
+                    if (!userSnapshot.exists()) {
+                        throw new FirebaseFirestoreException(
+                                "User not found",
+                                FirebaseFirestoreException.Code.ABORTED
+                        );
+                    }
+
+                    List<Map<String, Object>> equipmentList =
+                            (List<Map<String, Object>>) userSnapshot.get("equipment");
+
+                    if (equipmentList == null || equipmentList.isEmpty() || equipmentIndex >= equipmentList.size()) {
+                        throw new FirebaseFirestoreException(
+                                "Invalid equipment index",
+                                FirebaseFirestoreException.Code.ABORTED
+                        );
+                    }
+
+                    Map<String, Object> eq = equipmentList.get(equipmentIndex);
+                    Number effect = (Number) eq.get("effectAmount");
+                    double effectAmount = effect != null ? effect.doubleValue() : 0;
+                    String name = (String) eq.get("name");
+                    boolean isActivated = Boolean.TRUE.equals(eq.get("isActivated"));
+
+                    Long coinsVal = userSnapshot.getLong("coins");
+                    long coins = coinsVal != null ? coinsVal : 0L;
+
+                    Long powerPointsVal = userSnapshot.getLong("powerPoints");
+                    long powerPoints = powerPointsVal != null ? powerPointsVal : 0L;
+                    double oldPowerPoints = powerPoints * (100 / (100.0 + effectAmount));
+
+                    long lastBossReward = (long) Math.ceil(Math.pow(6.0 / 5.0, bossLevel - 2) * 200);
+                    long price = (long) (lastBossReward * 0.6);
+
+
+                    if (coins < price) {
+                        throw new FirebaseFirestoreException(
+                                "Not enough coins",
+                                FirebaseFirestoreException.Code.ABORTED
+                        );
+                    }
+
+                    double newEffect = Math.round((effectAmount + 1) * 100.0) / 100.0;
+                    eq.put("effectAmount", newEffect);
+                    transaction.update(userRef, "equipment", equipmentList);
+                    transaction.update(userRef, "coins", coins - price);
+
+                    if (isActivated && "Sword".equals(name)) {
+                        powerPoints = Math.round(oldPowerPoints + oldPowerPoints * (newEffect / 100.0));
+                        transaction.update(userRef, "powerPoints", powerPoints);
+                    }
+
+                    return null;
+                }).addOnCompleteListener(listener);
             }
 
-            List<Map<String, Object>> equipmentList =
-                    (List<Map<String, Object>>) userSnapshot.get("equipment");
-
-            if (equipmentList == null || equipmentList.isEmpty() || equipmentIndex >= equipmentList.size()) {
-                Log.e("upgradeEquipment", "Invalid equipment index!");
-                throw new FirebaseFirestoreException(
-                        "Invalid equipment index",
-                        FirebaseFirestoreException.Code.ABORTED
-                );
+            @Override
+            public void onFailure(Exception e) {
+                Log.e("upgradeEquipment", "❌ Failed to fetch boss level", e);
+                listener.onComplete(Tasks.forException(
+                        new FirebaseFirestoreException("Failed to get boss level", FirebaseFirestoreException.Code.ABORTED)
+                ));
             }
-            Map<String, Object> eq = equipmentList.get(equipmentIndex);
-            Number effect = (Number) eq.get("effectAmount");
-            double effectAmount = effect != null ? effect.doubleValue() : 0;
-            String name = (String) eq.get("name");
-            Long powerPointsVal = userSnapshot.getLong("powerPoints");
-            long powerPoints = powerPointsVal != null ? powerPointsVal : 0L;
-            double oldPowerPoints = powerPoints * (100/(100.0 + effectAmount));
-            boolean isActivated = Boolean.TRUE.equals(eq.get("isActivated"));
-            Long coinsVal = userSnapshot.getLong("coins");
-            long coins = coinsVal != null ? coinsVal : 0L;
-            Long bossLevelVal = bossSnapshot.getLong("level");
-            long bossLevel = bossLevelVal != null ? bossLevelVal : 0L;
-            long lastBossReward = (long) Math.ceil(Math.pow(6.0 / 5.0, bossLevel - 2) * 200);
-            long price = (long) (lastBossReward*0.6);
-            if (coins < lastBossReward) {
-                throw new FirebaseFirestoreException(
-                        "Not enough coins",
-                        FirebaseFirestoreException.Code.ABORTED
-                );
-            }
-
-            double newEffect = effectAmount + 1;
-            newEffect = Math.round(newEffect * 100.0) / 100.0;
-            eq.put("effectAmount", newEffect);
-            transaction.update(userRef, "equipment", equipmentList);
-            transaction.update(userRef, "coins", coins - price);
-            if(isActivated){
-                if(name.equals("Sword")){
-                    powerPoints = Math.round(oldPowerPoints + oldPowerPoints * (newEffect/100.0));
-                    transaction.update(userRef, "powerPoints", powerPoints);
-
-                }else{
-                    transaction.update(bossRef, "bonus", newEffect);
-                }
-            }
-
-            return  null;
-        }).addOnCompleteListener(listener);
+        });
     }
 
-    public void claimPrize(OnCompleteListener<Equipment> listener) {
+    /*public void claimPrize(OnCompleteListener<Equipment> listener) {
         FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         if (firebaseUser == null) {
             listener.onComplete(Tasks.forException(new Exception("No authenticated user")));
@@ -697,15 +724,15 @@ public class UserRepository {
         }
 
         DocumentReference userRef = db.collection("users").document(firebaseUser.getUid());
-        DocumentReference bossRef = db.collection("boss").document("levelBoss");
+        //DocumentReference bossRef = db.collection("boss").document("levelBoss");
 
-        Tasks.whenAllSuccess(userRef.get(), bossRef.get())
+        Tasks.whenAllSuccess(userRef.get(), /*bossRef.get())
                 .addOnSuccessListener(results -> {
                     DocumentSnapshot userSnap = (DocumentSnapshot) results.get(0);
-                    DocumentSnapshot bossSnap = (DocumentSnapshot) results.get(1);
+                    //DocumentSnapshot bossSnap = (DocumentSnapshot) results.get(1);
 
                     User user = userSnap.toObject(User.class);
-                    Boss boss = bossSnap.toObject(Boss.class);
+                    //Boss boss = bossSnap.toObject(Boss.class);
 
                     if (user == null || boss == null) {
                         listener.onComplete(Tasks.forException(new Exception("User or Boss not found")));
@@ -716,7 +743,7 @@ public class UserRepository {
                     Equipment rewardEquipment;
 
                     long lastBossReward = (long) Math.ceil(
-                            Math.pow(6.0 / 5.0, /*boss.getCoinReward()*/100 - 2) * 200);
+                            Math.pow(6.0 / 5.0, /*boss.getCoinReward()100 - 2) * 200);
 
                     Random random = new Random();
                     int number = random.nextInt(100) + 1;
@@ -791,7 +818,7 @@ public class UserRepository {
                 .addOnFailureListener(e ->
                         listener.onComplete(Tasks.forException(e))
                 );
-    }
+    }*/
 
     public void grantBadgeReward(String userId, Badge newBadge, OnCompleteListener<Badge> listener) {
         if (newBadge == null) {
@@ -919,130 +946,144 @@ public class UserRepository {
                 return;
             }
 
-            // ✅ 1. Generate random equipment
-            Equipment rewardEquipment = getRandomEquipment();
+            // ✅ 1. Generate random equipment asynchronously
+            getRandomEquipment(new GetEquipmentCallback() {
+                @Override
+                public void onSuccess(Equipment rewardEquipment) {
+                    if (rewardEquipment == null) {
+                        Log.d("Reward", "😅 No reward this time.");
+                        listener.onComplete(Tasks.forResult(null));
+                        return;
+                    }
 
-            if (rewardEquipment == null) {
-                // 🛑 No equipment reward this time, just return
-                listener.onComplete(Tasks.forResult(null));
-                return;
-            }
+                    Log.d("Reward", "🏆 Got " + rewardEquipment.getName());
 
+                    // ✅ 2. Merge or add to user's equipment list
+                    List<Equipment> userEquip = user.getEquipment();
+                    if (userEquip == null) userEquip = new ArrayList<>();
 
+                    boolean found = false;
+                    for (int i = 0; i < userEquip.size(); i++) {
+                        Equipment eq = userEquip.get(i);
+                        if (eq.getName().equalsIgnoreCase(rewardEquipment.getName())) {
+                            found = true;
 
-
-
-            // ✅ 2. Merge or add to user's equipment list
-            List<Equipment> userEquip = user.getEquipment();
-            boolean found = false;
-
-            if (userEquip != null) {
-                for (int i = 0; i < userEquip.size(); i++) {
-                    Equipment eq = userEquip.get(i);
-                    if (eq.getName().equalsIgnoreCase(rewardEquipment.getName())) {
-                        // Upgrade logic
-                        if (eq.getType() == EquipmentType.CLOTHING) {
-                            eq.setEffectAmount(eq.getEffectAmount() + 10);
-                            eq.setUsageCount(2);
-                            rewardEquipment.setActivated(eq.isActivated());
-                        } else {
-                            double newEffect = eq.getEffectAmount() + 0.02;
-                            newEffect = Math.round(newEffect * 100.0) / 100.0;
-                            eq.setEffectAmount(newEffect);
-                            rewardEquipment.setActivated(eq.isActivated());
+                            if (eq.getType() == EquipmentType.CLOTHING) {
+                                eq.setEffectAmount(eq.getEffectAmount() + 10);
+                                eq.setUsageCount(2);
+                                rewardEquipment.setActivated(eq.isActivated());
+                            } else {
+                                double newEffect = eq.getEffectAmount() + 0.02;
+                                newEffect = Math.round(newEffect * 100.0) / 100.0;
+                                eq.setEffectAmount(newEffect);
+                                rewardEquipment.setActivated(eq.isActivated());
+                            }
+                            break;
                         }
-                        found = true;
-                        break;
+                    }
+
+                    if (!found) {
+                        userEquip.add(rewardEquipment);
+                    }
+
+                    // ✅ 3. Save updated equipment to Firestore
+                    userRef.update("equipment", userEquip)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d("Reward", "✅ Equipment updated successfully");
+                                listener.onComplete(Tasks.forResult(rewardEquipment));
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("Reward", "❌ Failed to update equipment", e);
+                                listener.onComplete(Tasks.forException(e));
+                            });
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    Log.e("Reward", "❌ Failed to get reward", e);
+                    listener.onComplete(Tasks.forException(e));
+                }
+            });
+
+        }).addOnFailureListener(e -> {
+            Log.e("Reward", "❌ Failed to fetch user", e);
+            listener.onComplete(Tasks.forException(e));
+        });
+    }
+
+
+    public void getRandomEquipment(GetEquipmentCallback callback) {
+        getBossLevel(new HomeViewModel.BossLevelCallback() {
+            @Override
+            public void onSuccess(int bossLevel) {
+                long lastBossReward = (long) Math.ceil(Math.pow(6.0 / 5.0, bossLevel - 2) * 200);
+                Random random = new Random();
+
+                if (random.nextInt(100) + 1 > 80) {
+                    callback.onSuccess(null);
+                    return;
+                }
+
+                Equipment rewardEquipment;
+                int equipmentNumber = random.nextInt(100) + 1;
+
+                if (equipmentNumber <= 80) {
+                    int clothesNumber = random.nextInt(120) + 1;
+                    if (clothesNumber <= 100) {
+                        rewardEquipment = new Equipment(
+                                EquipmentType.CLOTHING, "Gloves",
+                                (int) Math.ceil(lastBossReward * 0.6),
+                                "Gives power point increase by 10% for two boss fights.",
+                                10, 2, R.drawable.gloves, false, false
+                        );
+                    } else if (clothesNumber <= 110) {
+                        rewardEquipment = new Equipment(
+                                EquipmentType.CLOTHING, "Shield",
+                                (int) Math.ceil(lastBossReward * 0.6),
+                                "Increases odds of landing a successful attack by 10%.",
+                                10, 2, R.drawable.shield, false, false
+                        );
+                    } else {
+                        rewardEquipment = new Equipment(
+                                EquipmentType.CLOTHING, "Boots",
+                                (int) Math.ceil(lastBossReward * 0.8),
+                                "Increases odds of getting an additional attack by 40%.",
+                                40, 2, R.drawable.boots, false, false
+                        );
+                    }
+                } else {
+                    if (random.nextInt(100) + 1 <= 50) {
+                        rewardEquipment = new Equipment(
+                                EquipmentType.WEAPON, "Sword", 0,
+                                "Permanently increases power by 5%",
+                                5, -1, R.drawable.sword, false, true
+                        );
+                    } else {
+                        rewardEquipment = new Equipment(
+                                EquipmentType.WEAPON, "Bow and Arrow", 0,
+                                "Permanently increases boss coin reward bonus by 5%",
+                                5, -1, R.drawable.bow_and_arrow, false, true
+                        );
                     }
                 }
-            } else {
-                userEquip = new ArrayList<>();
+
+                callback.onSuccess(rewardEquipment);
             }
 
-            addEquipment(rewardEquipment);
-
-            if (!found) {
-                userEquip.add(rewardEquipment);
+            @Override
+            public void onFailure(Exception e) {
+                callback.onFailure(e);
             }
-
-            // ✅ 3. Save updated equipment to Firestore
-            userRef.update("equipment", userEquip)
-                    .addOnSuccessListener(aVoid -> {
-                        Log.d("Reward", "✅ Equipment updated successfully");
-                        listener.onComplete(Tasks.forResult(rewardEquipment));
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e("Reward", "❌ Failed to update equipment", e);
-                        listener.onComplete(Tasks.forException(e));
-                    });
-
-        }).addOnFailureListener(e ->
-                listener.onComplete(Tasks.forException(e))
-        );
-    }
-
-    private Equipment getRandomEquipment() {
-        long lastBossReward = 1;
-        Random random = new Random();
-        int number = random.nextInt(100) + 1;
-
-        // 80% chance to get equipment, 20% chance to get nothing
-        if (number > 80) {
-            return null; // ❌ No reward
-        }
-
-        Equipment rewardEquipment;
-
-        int equipmentNumber = random.nextInt(100) + 1;
-        if (equipmentNumber <= 80) {
-            // 80% chance for clothing
-            int clothesNumber = random.nextInt(120) + 1;
-            if (clothesNumber <= 100) {
-                rewardEquipment = new Equipment(
-                        EquipmentType.CLOTHING, "Gloves",
-                        (int) Math.ceil(lastBossReward * 0.6),
-                        "Gives power point increase by 10% for two boss fights.",
-                        10, 2, R.drawable.gloves, false, false
-                );
-            } else if (clothesNumber <= 110) { // fixed condition (was duplicated)
-                rewardEquipment = new Equipment(
-                        EquipmentType.CLOTHING, "Shield",
-                        (int) Math.ceil(lastBossReward * 0.6),
-                        "Increases odds of landing a successful attack by 10%.",
-                        10, 2, R.drawable.shield, false, false
-                );
-            } else {
-                rewardEquipment = new Equipment(
-                        EquipmentType.CLOTHING, "Boots",
-                        (int) Math.ceil(lastBossReward * 0.8),
-                        "Increases odds of getting an additional attack by 40%.",
-                        40, 2, R.drawable.boots, false, false
-                );
-            }
-        } else {
-            // 20% chance for weapon
-            int weaponsNumber = random.nextInt(100) + 1;
-            if (weaponsNumber <= 50) {
-                rewardEquipment = new Equipment(
-                        EquipmentType.WEAPON, "Sword", 0,
-                        "Permanently increases power by 5%",
-                        5, -1, R.drawable.sword, false, true
-                );
-            } else {
-                rewardEquipment = new Equipment(
-                        EquipmentType.WEAPON, "Bow and Arrow", 0,
-                        "Permanently increases boss coin reward bonus by 5%",
-                        5, -1, R.drawable.bow_and_arrow, false, true
-                );
-            }
-        }
-
-        return rewardEquipment;
+        });
     }
 
 
 
 
+    public interface GetEquipmentCallback {
+        void onSuccess(@Nullable Equipment rewardEquipment);
+        void onFailure(Exception e);
+    }
 
     private void addEquipment(Equipment rewardEquipment){
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -1499,6 +1540,26 @@ public class UserRepository {
                 Log.d("InviteAction", "Sender notified: " + response.code());
             }
         });
+    }
+
+    public void getBossLevel(HomeViewModel.BossLevelCallback callback) {
+        bossRepository.getFirstActiveOrPendingBoss(SessionManager.getInstance().getUserId(),
+                new BossRepository.GetOneCallback() {
+                    @Override
+                    public void onSuccess(Boss boss) {
+                        if (boss != null) {
+                            callback.onSuccess(boss.getLevel());
+                        } else {
+                            callback.onSuccess(1);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        Log.e("BossLevel", "Failed to fetch boss", e);
+                        callback.onFailure(e);
+                    }
+                });
     }
 
     public void sendAllianceMessageNotification(
