@@ -26,7 +26,9 @@ import com.example.taskgame.R;
 import com.example.taskgame.databinding.FragmentEquipmentShopBinding;
 import com.example.taskgame.domain.enums.EquipmentType;
 import com.example.taskgame.domain.models.Equipment;
+import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.view.adapters.EquipmentListAdapter;
+import com.example.taskgame.view.viewmodels.AllianceViewModel;
 import com.example.taskgame.view.viewmodels.EquipmentShopViewModel;
 
 
@@ -39,6 +41,7 @@ public class EquipmentShopFragment extends Fragment {
     private EquipmentShopViewModel equipmentShopViewModel;
     private FragmentEquipmentShopBinding binding;
     private EquipmentListFragment listFragment;
+    private AllianceViewModel allianceViewModel;
 
     public static EquipmentShopFragment newInstance() {
         return new EquipmentShopFragment();
@@ -47,6 +50,7 @@ public class EquipmentShopFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         equipmentShopViewModel = new ViewModelProvider(this).get(EquipmentShopViewModel.class);
+        allianceViewModel = new ViewModelProvider(this).get(AllianceViewModel.class);
         binding = FragmentEquipmentShopBinding.inflate(inflater, container, false);
         prepareEquipmentList(equipment);
         return binding.getRoot();
@@ -62,6 +66,11 @@ public class EquipmentShopFragment extends Fragment {
             equipmentShopViewModel.buyEquipment(item, task -> {
                 if (task.isSuccessful()) {
                     Toast.makeText(getContext(), "Purchase successful!", Toast.LENGTH_SHORT).show();
+                    allianceViewModel.applySpecialMissionAction(
+                            SessionManager.getInstance().getUserId(),
+                            "storePurchase",   // or "task", "storePurchase", etc.
+                            null            // optional difficulty if needed
+                    );
                 } else {
                     Toast.makeText(getContext(), "Not enough coins!", Toast.LENGTH_SHORT).show();
                 }

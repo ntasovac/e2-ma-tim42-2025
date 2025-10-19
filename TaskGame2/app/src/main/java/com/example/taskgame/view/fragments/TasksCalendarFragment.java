@@ -178,7 +178,7 @@ public class TasksCalendarFragment extends Fragment {
         AllianceViewModel allianceVM = new ViewModelProvider(requireActivity()).get(AllianceViewModel.class);
         String userId = SessionManager.getInstance().getUserId();
 
-        allianceVM.loadAllianceByUser(userId);
+        allianceVM.loadAlliance();
 
         allianceVM.getAlliance().observe(getViewLifecycleOwner(), alliance -> {
             if (alliance == null) return;

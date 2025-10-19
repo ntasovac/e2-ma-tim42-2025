@@ -4,6 +4,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,7 +18,9 @@ import android.widget.EditText;
 import com.example.taskgame.R;
 import com.example.taskgame.data.repositories.UserRepository;
 import com.example.taskgame.domain.models.Message;
+import com.example.taskgame.domain.models.SessionManager;
 import com.example.taskgame.view.adapters.ChatAdapter;
+import com.example.taskgame.view.viewmodels.AllianceViewModel;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -34,6 +37,8 @@ public class ChatFragment extends Fragment {
     private ChatAdapter adapter;
     private CollectionReference messagesRef;
     private String allianceName;
+    private AllianceViewModel allianceViewModel;
+
 
     @Nullable
     @Override
@@ -95,6 +100,13 @@ public class ChatFragment extends Fragment {
                     msg.put("timestamp", FieldValue.serverTimestamp());
                     messagesRef.add(msg);
                     messageInput.setText("");
+
+                    allianceViewModel = new ViewModelProvider(this).get(AllianceViewModel.class);
+                    allianceViewModel.applySpecialMissionAction(
+                            SessionManager.getInstance().getUserId(),
+                            "dailyMessage",   // or "task", "storePurchase", etc.
+                            null            // optional difficulty if needed
+                    );
                 }
             });
         });
