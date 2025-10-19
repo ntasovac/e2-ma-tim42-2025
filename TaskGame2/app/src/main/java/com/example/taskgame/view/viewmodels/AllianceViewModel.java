@@ -83,7 +83,7 @@ public class AllianceViewModel extends ViewModel {
 
         // Step 1️⃣: Fetch the latest alliance data from Firestore
         allianceRepo.getAllianceByName(allianceName).observeForever(alliance -> {
-            if (alliance == null || alliance.getSpecialMission() == null) {
+            if (alliance == null || !alliance.isMissionActive()) {
                 System.out.println("⚠️ AllianceVM.apply: No special mission found for alliance " + allianceName);
                 return;
             }
@@ -131,13 +131,39 @@ public class AllianceViewModel extends ViewModel {
             // Step 4️⃣: Handle boss defeat
             if (mission.isBossDefeated()) {
                 rewardAllUsersFromAlliance(alliance);
+                alliance.addDoneSpecialMission(mission);
+                alliance.setMissionActive(false);
+                updateDoneMissionsForAlliance(alliance);
+            }
+        });
+    }
+
+    public void updateAllMissionsForAlliance(Alliance alliance) {
+        AllianceRepository allianceRepo = new AllianceRepository();
+        allianceRepo.updateAllSpecialMissionsByName(alliance.getName(), alliance.getAllSpecialMissions(), task1 -> {
+            if (task1.isSuccessful()) {
+                Log.d("AllianceRepo", "✅ allSpecialMissions updated successfully.");
+            } else {
+                Log.e("AllianceRepo", "❌ Failed to update allSpecialMissions.", task1.getException());
+            }
+        });
+    }
+
+    public void updateDoneMissionsForAlliance(Alliance alliance) {
+        AllianceRepository allianceRepo = new AllianceRepository();
+        allianceRepo.updateDoneSpecialMissionsByName(alliance.getName(), alliance.getDoneSpecialMissions(), task1 -> {
+            if (task1.isSuccessful()) {
+                Log.d("AllianceRepo", "✅ allSpecialMissions updated successfully.");
+            } else {
+                Log.e("AllianceRepo", "❌ Failed to update allSpecialMissions.", task1.getException());
             }
         });
     }
 
 
+
     public void rewardAllUsersFromAlliance(Alliance alliance) {
-        if (alliance == null || alliance.getMembers() == null || alliance.getMembers().isEmpty()) {
+        if (alliance == null || alliance.getAllMembers() == null || alliance.getAllMembers().isEmpty()) {
             System.out.println("⚠️ No participants found in alliance, skipping rewards.");
             return;
         }
@@ -145,7 +171,7 @@ public class AllianceViewModel extends ViewModel {
         UserRepository userRepo = new UserRepository();
         System.out.println("🎁 Starting reward distribution for alliance: " + alliance.getId());
 
-        for (User member : alliance.getMembers()) {
+        for (User member : alliance.getAllMembers()) {
             userRepo.getUserById(member.getId().toString(), new UserRepository.GetUserCallback() {
                 @Override
                 public void onSuccess(User user) {
@@ -335,13 +361,13 @@ public class AllianceViewModel extends ViewModel {
             }
 
             // Step 3️⃣: Create a new mission
-            int membersCount = alliance.getMembers() != null ? alliance.getMembers().size() : 0;
-            membersCount += 1;
+            int membersCount = alliance.getAllMembers() != null ? alliance.getAllMembers().size() : 0;
+            //membersCount += 1;
             int totalHp = 100 * Math.max(1, membersCount);
 
             Map<String, Integer> userDamage = new HashMap<>();
-            if (alliance.getMembers() != null) {
-                for (User member : alliance.getMembers()) {
+            if (alliance.getAllMembers() != null) {
+                for (User member : alliance.getAllMembers()) {
                     userDamage.put(String.valueOf(member.getId()), 0);
                 }
             }
@@ -359,10 +385,16 @@ public class AllianceViewModel extends ViewModel {
             // Step 4️⃣: Create mission in Firestore (specialMissions collection)
             allianceRepo.updateSpecialMissionByName(alliance.getName(), mission, true, task -> {
                 if (task.isSuccessful()) {
-                    alliance.setSpecialMissionActive(true);
+                    alliance.setMissionActive(true);
                     alliance.setSpecialMission(mission);
+                    alliance.addSpecialMission(mission);
+
+
                     allianceLiveData.setValue(alliance);
                     specialMissionLiveData.setValue(mission);
+
+                    // save all special missions
+                    updateAllMissionsForAlliance(alliance);
                     Log.d("AllianceVM", "✅ Special mission started for alliance: " + allianceName);
                 } else {
                     Log.e("AllianceVM", "❌ Failed to update alliance mission", task.getException());

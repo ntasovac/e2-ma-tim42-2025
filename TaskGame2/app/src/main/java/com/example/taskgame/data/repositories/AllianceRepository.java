@@ -281,6 +281,93 @@ public class AllianceRepository {
                 });
     }
 
+    public void updateAllSpecialMissionsByName(String allianceName, List<SpecialMission> allSpecialMissions, @NonNull OnCompleteListener<Void> listener) {
+        if (allianceName == null || allianceName.isEmpty()) {
+            listener.onComplete(Tasks.forException(
+                    new IllegalArgumentException("Alliance name cannot be null or empty")
+            ));
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("alliances")
+                .whereEqualTo("name", allianceName)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (querySnapshot.isEmpty()) {
+                        listener.onComplete(Tasks.forException(
+                                new Exception("Alliance with name '" + allianceName + "' not found")
+                        ));
+                        return;
+                    }
+
+                    DocumentReference allianceRef = querySnapshot.getDocuments().get(0).getReference();
+
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("allSpecialMissions", allSpecialMissions);
+
+                    allianceRef.update(updates)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d("AllianceRepo", "✅ Updated allSpecialMissions for alliance: " + allianceName);
+                                listener.onComplete(Tasks.forResult(null));
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("AllianceRepo", "❌ Failed to update allSpecialMissions for " + allianceName, e);
+                                listener.onComplete(Tasks.forException(e));
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("AllianceRepo", "❌ Failed to find alliance: " + allianceName, e);
+                    listener.onComplete(Tasks.forException(e));
+                });
+    }
+
+    public void updateDoneSpecialMissionsByName(String allianceName, List<SpecialMission> doneSpecialMissions, @NonNull OnCompleteListener<Void> listener) {
+        if (allianceName == null || allianceName.isEmpty()) {
+            listener.onComplete(Tasks.forException(
+                    new IllegalArgumentException("Alliance name cannot be null or empty")
+            ));
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("alliances")
+                .whereEqualTo("name", allianceName)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (querySnapshot.isEmpty()) {
+                        listener.onComplete(Tasks.forException(
+                                new Exception("Alliance with name '" + allianceName + "' not found")
+                        ));
+                        return;
+                    }
+
+                    DocumentReference allianceRef = querySnapshot.getDocuments().get(0).getReference();
+
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("doneSpecialMissions", doneSpecialMissions);
+
+                    allianceRef.update(updates)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d("AllianceRepo", "✅ Updated doneSpecialMissions for alliance: " + allianceName);
+                                listener.onComplete(Tasks.forResult(null));
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("AllianceRepo", "❌ Failed to update doneSpecialMissions for " + allianceName, e);
+                                listener.onComplete(Tasks.forException(e));
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("AllianceRepo", "❌ Failed to find alliance: " + allianceName, e);
+                    listener.onComplete(Tasks.forException(e));
+                });
+    }
+
+
 
     public MutableLiveData<Alliance> getAllianceByName(String name) {
         MutableLiveData<Alliance> liveData = new MutableLiveData<>();

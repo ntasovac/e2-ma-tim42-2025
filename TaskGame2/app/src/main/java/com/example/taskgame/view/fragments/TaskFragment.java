@@ -168,7 +168,10 @@ public class TaskFragment extends Fragment {
     }
 
     private void updateTotalXp() {
-        binding.tvTotalXp.setText("Total XP: " + (chosenDifficultyXp + chosenImportanceXp));
+        int level = SessionManager.getInstance().getUser().getLevel();
+        //int level = t.getLevel();
+        int totalXP = (int) ((chosenDifficultyXp + chosenImportanceXp) * Math.pow(1.5, level));
+        binding.tvTotalXp.setText("Total XP: " + (totalXP));
     }
 
     private void onSave() {
@@ -217,7 +220,10 @@ public class TaskFragment extends Fragment {
 
         t.setDifficultyXp(chosenDifficultyXp);
         t.setImportanceXp(chosenImportanceXp);
-        t.setTotalXp(chosenDifficultyXp + chosenImportanceXp);
+
+        int level = t.getLevel();
+        int totalXP = (int) ((chosenDifficultyXp + chosenImportanceXp) * Math.pow(1.5, level));
+        t.setTotalXp(totalXP);
         t.setCreatedAtUtc(System.currentTimeMillis());
 
         binding.btnSave.setEnabled(false);
@@ -239,6 +245,7 @@ public class TaskFragment extends Fragment {
 
     private String text(CharSequence cs) { return cs == null ? "" : cs.toString().trim(); }
     private String text(android.widget.TextView tv) { return text(tv.getText()); }
+
     private void toast(String msg) { Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show(); }
 
     @Override public void onDestroyView() {

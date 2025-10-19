@@ -3,6 +3,7 @@ package com.example.taskgame.view.fragments;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,7 +46,7 @@ public class AllianceFragment extends Fragment {
     private TextView tvAllianceName, tvLeader, tvMembers, tvSpecialMissionStatus;
     private Button btnStartSpecialMission;
 
-    private String allianceId;
+    //private String allianceName;
 
     @Nullable
     @Override
@@ -119,10 +120,13 @@ public class AllianceFragment extends Fragment {
         // Observe alliance data
         viewModel.getAlliance().observe(getViewLifecycleOwner(), alliance -> {
             if (alliance == null) return;
-            allianceId = alliance.getId();
-            tvAllianceName.setText("Alliance ID: " + alliance.getId());
+            String allianceName1 = alliance.getName();
+            tvAllianceName.setText("Alliance name: " + alliance.getName());
 
-            if (alliance.isSpecialMissionActive() || true) {
+            Log.d("AllianceFragment", "Alliance loaded: " + allianceName1 +
+                    " | Mission active: " + alliance.isMissionActive());
+
+            if (alliance.isMissionActive()) {
                 tvSpecialMissionStatus.setText("Special Mission: Active");
                 btnStartSpecialMission.setVisibility(View.GONE);
                 viewModel.loadAlliance();
@@ -130,7 +134,7 @@ public class AllianceFragment extends Fragment {
                     if (mission != null) {
                         updateSpecialMissionUI(mission);
                     } else{
-                        System.out.println("⚠️ No special mission found for alliance frag: " + allianceId);
+                        System.out.println("⚠️ No special mission found for alliance frag: " + allianceName1);
                     }
                 });
             } else {
